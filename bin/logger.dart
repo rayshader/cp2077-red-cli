@@ -1,19 +1,23 @@
-import 'package:chalkdart/chalk.dart';
+import 'package:chalkdart/chalkstrings.dart';
 
 class Logger {
   static log(String message) {
-    print(message);
+    _prefix('', message);
   }
 
   static info(String message) {
-    print('${chalk.blue('ⓘ')} $message');
+    _prefix('ⓘ '.blue, message);
   }
 
   static error(String message) {
-    print('${chalk.bold.red('✗')} ${chalk.bold(message)}');
+    _prefix('✗ '.bold.red, message.bold);
   }
 
   static done(String message) {
-    print('${chalk.green('✓')} $message');
+    _prefix('✓ '.green, message);
+  }
+
+  static _prefix(String prefix, String message) {
+    print('$prefix$message');
   }
 }
