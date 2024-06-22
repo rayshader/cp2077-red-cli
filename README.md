@@ -29,18 +29,20 @@ GitHub: https://github.com/rayshader/cp2077-red-cli
 
 You must provide a `red.config.json` file to configure your project. You can leave some fields empty to use default 
 values. If your setup is unique, you should have enough options to configure red-cli with your environment:
-```json
+```jsonc
 {
   "name": "Awesome",
   "version": "0.1.0",
   "game": "<path-to-game>",         // Leave empty to auto-detect game path.
-  "dist": "",                       // Directory to output bundle to.
+  "dist": "<path-to-output>",       // Directory to output bundle to.
                                     // (default is "dist\")
   "scripts": {
     "redscript": {
-      "src": "scripts\\Awesome\\",  // Root directory to look for your .reds files.
-      "output": ""                  // Path to output scripts to when installing in game's directory.
-                                    // It will append <name> of your project automatically.
+      "src": "scripts\\Awesome\\",  // Root directory to look for your .reds 
+                                    // files.
+      "output": ""                  // Path to output scripts to when 
+                                    // installing in game's directory. It will 
+                                    // append <name> of your project for you.
                                     // (default is "r6\scripts\")
     }
   }
