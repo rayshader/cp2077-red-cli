@@ -20,6 +20,7 @@ class ArchiveInfo {
 ArchiveInfo pack(RedConfig config, BundleMode mode, bool clean) {
   BundleInfo info = bundle(config, mode);
 
+  bundlePlugin(config, mode);
   logModules(info.modules);
   final archiveFile = config.archiveFile;
 

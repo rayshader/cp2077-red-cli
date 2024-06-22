@@ -43,6 +43,8 @@ class BundleCommand extends Command {
 
     Logger.log('Bundling in ${mode.name.cyan} mode:');
     BundleInfo info = bundle(config, mode);
+
+    bundlePlugin(config, mode);
     int elapsedTime = DateTime.now().difference(start).inMilliseconds;
 
     logModules(info.modules);

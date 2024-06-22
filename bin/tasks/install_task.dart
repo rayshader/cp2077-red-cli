@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../data/red_config.dart';
+import '../extensions/chalk_ext.dart';
 import '../extensions/path_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
@@ -14,7 +15,7 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
   final redscriptDir = config.installRedscriptDir;
 
   if (!redscriptDir.existsSync()) {
-    Logger.error('Could not find redscript directory in ${redscriptDir.path}.');
+    Logger.error('Could not find redscript directory in ${redscriptDir.path.path}.');
     Logger.info('Did you install redscript? '
         'See https://github.com/jac3km4/redscript?tab=readme-ov-file#integrating-with-the-game.');
     exit(2);
@@ -36,4 +37,26 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
   if (bundleOption && cleanOption) {
     srcDir.deleteSync(recursive: true);
   }
+}
+
+void installPlugin(RedConfig config, BundleMode mode) {
+  if (config.plugin == null) {
+    return;
+  }
+  final installDir = config.installPluginDir;
+
+  if (!installDir.existsSync()) {
+    Logger.error('Could not find red4ext directory in ${installDir.path.path}.');
+    Logger.info('Did you install RED4ext? '
+        'See https://docs.red4ext.com/getting-started/installing-red4ext.');
+    exit(2);
+  }
+  String pluginPath = (mode == BundleMode.debug) ? config.plugin!.debug : config.plugin!.release;
+  File srcPluginFile = File(p.join(pluginPath, '${config.name}.dll'));
+  Directory dstPluginDir = Directory(p.join(installDir.path, config.name));
+
+  dstPluginDir.createSync(recursive: true);
+  File dstPluginFile = File(p.join(dstPluginDir.path, '${config.name}.dll'));
+
+  srcPluginFile.copySync(dstPluginFile.path);
 }

@@ -13,6 +13,7 @@ class RedConfig {
   String game;
   String dist;
   RedConfigScripts? scripts;
+  RedConfigPlugin? plugin;
 
   RedConfig({
     this.name = '',
@@ -20,6 +21,7 @@ class RedConfig {
     this.game = '',
     this.dist = 'dist\\',
     this.scripts,
+    this.plugin,
   });
 
   Directory get gameDir => Directory(game);
@@ -34,6 +36,8 @@ class RedConfig {
 
   Directory get installRedscriptDir => Directory(p.join(game, scripts!.redscript!.output));
 
+  Directory get installPluginDir => Directory(p.join(game, 'red4ext', 'plugins'));
+
   File get archiveFile => File('$name-v$version.zip');
 
   factory RedConfig.fromJson(Map<String, dynamic> json) {
@@ -43,6 +47,7 @@ class RedConfig {
       game: json['game'] ?? '',
       dist: json['dist'] ?? 'dist\\',
       scripts: RedConfigScripts.fromJson(json['scripts'] ?? {}),
+      plugin: RedConfigPlugin.fromJson(json['plugin'] ?? {}),
     );
   }
 }
@@ -78,6 +83,27 @@ class RedConfigRedscript {
     return RedConfigRedscript(
       src: json['src'] ?? '',
       output: json['output'] ?? 'r6\\scripts\\',
+    );
+  }
+}
+
+class RedConfigPlugin {
+  final String debug;
+  final String release;
+
+  Directory get debugDir => Directory(debug);
+
+  Directory get releaseDir => Directory(release);
+
+  const RedConfigPlugin({
+    this.debug = '',
+    this.release = '',
+  });
+
+  factory RedConfigPlugin.fromJson(Map<String, dynamic> json) {
+    return RedConfigPlugin(
+      debug: json['debug'] ?? '',
+      release: json['release'] ?? '',
     );
   }
 }

@@ -58,6 +58,7 @@ class InstallCommand extends Command {
 
     Logger.log('Installing in ${mode.name.cyan} mode (${cleanInfo.cyan}):');
     install(config, mode, bundle, clean);
+    installPlugin(config, mode);
     int elapsedTime = DateTime.now().difference(start).inMilliseconds;
 
     Logger.done('Installation of ${config.name.bold} done in ${formatTime(elapsedTime).bold}');

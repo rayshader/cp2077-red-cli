@@ -9,5 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - command to bundle scripts (merge per module).
 - command to install scripts in game's directory.
 - command to pack scripts in an archive, ready to release.
+- support Redscript scripts.
+- support RED4ext plugin.
 
 ------------------------

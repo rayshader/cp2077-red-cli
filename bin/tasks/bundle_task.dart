@@ -28,7 +28,7 @@ BundleInfo bundle(RedConfig config, BundleMode mode) {
   final srcPath = config.scripts!.redscript!.src;
 
   if (srcPath.isEmpty) {
-    Logger.error('Missing path to scripts in ${'red.config.json'.bold} (${'scripts.redscript.path'.cyan}).');
+    Logger.error('Missing path to scripts in ${'red.config.json'.bold} (${'scripts.redscript.src'.cyan}).');
     exit(2);
   }
   final srcDir = config.redscriptSrcDir;
@@ -45,6 +45,20 @@ BundleInfo bundle(RedConfig config, BundleMode mode) {
     modules: modules,
     size: size,
   );
+}
+
+void bundlePlugin(RedConfig config, BundleMode mode) {
+  if (config.plugin == null) {
+    return;
+  }
+  String pluginPath = (mode == BundleMode.debug) ? config.plugin!.debug : config.plugin!.release;
+  File srcPluginFile = File(p.join(pluginPath, '${config.name}.dll'));
+  Directory dstPluginDir = Directory(p.join(config.dist, 'red4ext', 'plugins', config.name));
+
+  dstPluginDir.createSync(recursive: true);
+  File dstPluginFile = File(p.join(dstPluginDir.path, '${config.name}.dll'));
+
+  srcPluginFile.copySync(dstPluginFile.path);
 }
 
 List<ScriptFile> getScripts(Directory srcDir, BundleMode mode) {
