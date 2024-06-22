@@ -28,7 +28,11 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
   final srcDir = (bundleOption) ? config.distDir : config.redscriptSrcDir;
   final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
 
-  copyDirectorySync(srcDir, dstDir);
+  copyDirectorySync(
+    srcDir,
+    dstDir,
+    filter: (File file) => filterRedscriptFile(file, mode),
+  );
   if (bundleOption && cleanOption) {
     srcDir.deleteSync(recursive: true);
   }
