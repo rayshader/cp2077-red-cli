@@ -22,11 +22,13 @@ class InstallCommand extends Command {
   }) {
     argParser.addFlag(
       'debug',
+      negatable: false,
       defaultsTo: false,
       help: 'Include scripts to run tests (ending with ${'Test.reds'.path}).',
     );
     argParser.addFlag(
       'release',
+      negatable: false,
       defaultsTo: true,
       help: 'Exclude test scripts.',
     );
