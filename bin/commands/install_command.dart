@@ -20,14 +20,14 @@ class InstallCommand extends Command {
   InstallCommand({
     required this.config,
   }) {
-    argParser.addOption(
+    argParser.addFlag(
       'debug',
-      defaultsTo: 'false',
+      defaultsTo: false,
       help: 'Include scripts to run tests (ending with ${'Test.reds'.path}).',
     );
-    argParser.addOption(
+    argParser.addFlag(
       'release',
-      defaultsTo: 'true',
+      defaultsTo: true,
       help: 'Exclude test scripts.',
     );
     argParser.addFlag(
@@ -48,7 +48,7 @@ class InstallCommand extends Command {
     if (argResults == null) {
       return;
     }
-    BundleMode mode = argResults!.option('debug') == 'true' ? BundleMode.debug : BundleMode.release;
+    BundleMode mode = argResults!.flag('debug') ? BundleMode.debug : BundleMode.release;
     bool bundle = argResults!.flag('bundle');
     bool clean = argResults!.flag('clean');
     String cleanInfo = clean ? 'clean output' : 'keep output';

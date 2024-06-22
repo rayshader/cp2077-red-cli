@@ -19,14 +19,14 @@ class BundleCommand extends Command {
   BundleCommand({
     required this.config,
   }) {
-    argParser.addOption(
+    argParser.addFlag(
       'debug',
-      defaultsTo: 'false',
+      defaultsTo: false,
       help: 'Include scripts to run tests (ending with ${'Test.reds'.path}).',
     );
-    argParser.addOption(
+    argParser.addFlag(
       'release',
-      defaultsTo: 'true',
+      defaultsTo: true,
       help: 'Exclude test scripts.',
     );
   }
@@ -36,7 +36,7 @@ class BundleCommand extends Command {
     if (argResults == null) {
       return;
     }
-    BundleMode mode = argResults!.option('debug') == 'true' ? BundleMode.debug : BundleMode.release;
+    BundleMode mode = argResults!.flag('debug') ? BundleMode.debug : BundleMode.release;
     DateTime start = DateTime.now();
 
     Logger.log('Bundling in ${mode.name.cyan} mode:');
