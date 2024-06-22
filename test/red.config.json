@@ -1,0 +1,15 @@
+{
+  "name": "Awesome",
+  "version": "0.1.0",
+  "game": "game\\",
+  "dist": "dist\\",
+  "scripts": {
+    "redscript": {
+      "src": "scripts\\Awesome\\"
+    }
+  },
+  "plugin": {
+    "debug": "build\\Debug\\",
+    "release": "build\\Release\\"
+  }
+}
