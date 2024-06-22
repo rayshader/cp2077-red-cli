@@ -7,8 +7,10 @@ import '../extensions/path_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
 
-void install(RedConfig config, BundleMode mode, bool clean) {
-  bundle(config, mode);
+void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
+  if (bundleOption) {
+    bundle(config, mode);
+  }
   final redscriptDir = config.installRedscriptDir;
 
   if (!redscriptDir.existsSync()) {
@@ -22,10 +24,12 @@ void install(RedConfig config, BundleMode mode, bool clean) {
   if (scriptsDir.existsSync()) {
     scriptsDir.deleteSync(recursive: true);
   }
-  final distDir = config.distDir;
+  scriptsDir.createSync();
+  final srcDir = (bundleOption) ? config.distDir : config.redscriptSrcDir;
+  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
 
-  copyDirectorySync(distDir, config.gameDir);
-  if (clean) {
-    distDir.deleteSync(recursive: true);
+  copyDirectorySync(srcDir, dstDir);
+  if (bundleOption && cleanOption) {
+    srcDir.deleteSync(recursive: true);
   }
 }

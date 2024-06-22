@@ -13,7 +13,7 @@ class InstallCommand extends Command {
   final String name = 'install';
 
   @override
-  final String description = 'Install scripts in your game\'s directory (include bundle step).';
+  final String description = 'Install scripts in your game\'s directory.';
 
   final RedConfig config;
 
@@ -31,6 +31,11 @@ class InstallCommand extends Command {
       help: 'Exclude test scripts.',
     );
     argParser.addFlag(
+      'bundle',
+      defaultsTo: false,
+      help: 'Bundle scripts before installing.',
+    );
+    argParser.addFlag(
       'clean',
       negatable: true,
       defaultsTo: true,
@@ -44,12 +49,13 @@ class InstallCommand extends Command {
       return;
     }
     BundleMode mode = argResults!.option('debug') == 'true' ? BundleMode.debug : BundleMode.release;
+    bool bundle = argResults!.flag('bundle');
     bool clean = argResults!.flag('clean');
     String cleanInfo = clean ? 'clean output' : 'keep output';
     DateTime start = DateTime.now();
 
     Logger.log('Installing in ${mode.name.cyan} mode (${cleanInfo.cyan}):');
-    install(config, mode, clean);
+    install(config, mode, bundle, clean);
     int elapsedTime = DateTime.now().difference(start).inMilliseconds;
 
     Logger.done('Installation of ${config.name.bold} done in ${formatTime(elapsedTime).bold}');
