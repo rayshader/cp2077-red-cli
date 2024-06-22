@@ -80,8 +80,8 @@ List<ScriptModule> getModules(List<ScriptFile> scripts, BundleMode _mode) {
     module.addScript(script);
   }
   modules.sort((a, b) {
-    if (a.name == 'global') {
-      return -1;
+    if (b.name == 'global') {
+      return 1;
     }
     return a.name.compareTo(b.name);
   });
