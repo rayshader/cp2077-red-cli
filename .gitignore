@@ -31,4 +31,5 @@ doc/api/
 *.zip
 
 # Avoid test assets
+test/dist/
 test/game/r6/scripts/**
