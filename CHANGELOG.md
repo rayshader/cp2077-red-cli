@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- command to bundle scripts (merge per module)
+- command to bundle scripts (merge per module).
 - command to install scripts in game's directory.
 - command to pack scripts in an archive, ready to release.
 
