@@ -154,16 +154,16 @@ It will bundle scripts and put them in an archive, ready to release to users. If
 will also add the library file. This is how it should look like with the example you can find in [test/]:
 ```
 Awesome-v0.1.0.zip
-|-- r6
-    |-- scripts
-        |-- Awesome
+|-- r6\
+    |-- scripts\
+        |-- Awesome\
             |-- Awesome.Data.reds
             |-- Awesome.Global.reds
             |-- Awesome.reds
             |-- Awesome.Services.reds
-|-- red4ext
-    |-- plugins
-        |-- Awesome
+|-- red4ext\
+    |-- plugins\
+        |-- Awesome\
             |-- Awesome.dll
 ```
 
