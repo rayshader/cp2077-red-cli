@@ -131,10 +131,7 @@ RedConfig? getConfig() {
 
   if (!config.gameDir.existsSync()) {
     config.game = detectGamePath() ?? '';
-    if (config.game.isNotEmpty) {
-      Logger.info('Could not find game\'s directory in ${gamePath.path}.');
-      Logger.done('Fallback to game\'s directory in ${config.game.path}.');
-    } else {
+    if (config.game.isEmpty) {
       Logger.error('Could not find game\'s directory in ${gamePath.path}.');
     }
   }
