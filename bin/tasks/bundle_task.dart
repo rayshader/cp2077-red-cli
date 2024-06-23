@@ -41,6 +41,9 @@ BundleInfo bundle(RedConfig config, BundleMode mode) {
   final modules = getModules(scripts, mode);
   final size = bundleModules(modules, config, mode);
 
+  if (mode == BundleMode.release && config.license) {
+    config.licenseFile.copySync(p.join(config.outputDir.path, 'LICENSE'));
+  }
   return BundleInfo(
     modules: modules,
     size: size,

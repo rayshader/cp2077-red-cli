@@ -10,6 +10,7 @@ import '../logger.dart';
 class RedConfig {
   String name;
   String version;
+  bool license;
   String game;
   String dist;
   RedConfigScripts? scripts;
@@ -17,12 +18,15 @@ class RedConfig {
 
   RedConfig({
     this.name = '',
+    this.license = false,
     this.version = '',
     this.game = '',
     this.dist = 'dist\\',
     this.scripts,
     this.plugin,
   });
+
+  File get licenseFile => File('LICENSE');
 
   Directory get gameDir => Directory(game);
 
@@ -44,6 +48,7 @@ class RedConfig {
     return RedConfig(
       name: json['name'] ?? '',
       version: json['version'] ?? '',
+      license: json['license'] ?? false,
       game: json['game'] ?? '',
       dist: json['dist'] ?? 'dist\\',
       scripts: RedConfigScripts.fromJson(json['scripts'] ?? {}),
@@ -125,6 +130,10 @@ RedConfig? getConfig() {
   if (config.version.isEmpty) {
     config.version = '0.1.0';
     Logger.info('Version number not defined, fallback to ${'0.1.0'.cyan}.');
+  }
+  if (config.license && !config.licenseFile.existsSync()) {
+    Logger.info('Ignoring license, file not found in ${'LICENSE'.path}.');
+    config.license = false;
   }
   config.game = config.game.isEmpty ? '' : config.game;
   final gamePath = config.game;

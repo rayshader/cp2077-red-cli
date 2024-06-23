@@ -1,6 +1,7 @@
 {
   "name": "Awesome",
   "version": "0.1.0",
+  "licence": true,
   "game": "game\\",
   "dist": "dist\\",
   "scripts": {
