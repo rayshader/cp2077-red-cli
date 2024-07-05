@@ -1,6 +1,6 @@
 name: cp2077_red_cli
 description: A tool to bundle scripts of a mod for Cyberpunk 2077.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/rayshader/cp2077-red-cli
 
 environment:

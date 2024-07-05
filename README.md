@@ -135,11 +135,12 @@ commands to see the output.
 ### Install
 You can install your scripts in the game's directory with a simple command, from your project's directory:
 ```shell
-red-cli install --debug
+red-cli install
 ```
 
 It will install scripts in `<game>\r6\scripts\<name>` for you. If you have configured RED4ext plugin, it will also 
-install the library in `<game>\red4ext\plugins\<name>\<name>.dll`. In this case, using the Debug build.
+install the library in `<game>\red4ext\plugins\<name>\<name>.dll`. It will run in `debug` mode by default to include 
+test scripts.
 
 You can use option `--bundle` to bundle your scripts before installing them. It will show you how it will look like when
 releasing your project with the `pack` command. You should not use this option when debugging, as it will be harder to 
