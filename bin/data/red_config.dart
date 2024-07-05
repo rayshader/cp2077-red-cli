@@ -52,7 +52,7 @@ class RedConfig {
       game: json['game'] ?? '',
       dist: json['dist'] ?? 'dist\\',
       scripts: RedConfigScripts.fromJson(json['scripts'] ?? {}),
-      plugin: RedConfigPlugin.fromJson(json['plugin'] ?? {}),
+      plugin: json['plugin'] != null ? RedConfigPlugin.fromJson(json['plugin']) : null,
     );
   }
 }
