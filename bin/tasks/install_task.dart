@@ -12,31 +12,8 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
   if (bundleOption) {
     bundle(config, mode);
   }
-  final redscriptDir = config.installRedscriptDir;
-
-  if (!redscriptDir.existsSync()) {
-    Logger.error('Could not find redscript directory in ${redscriptDir.path.path}.');
-    Logger.info('Did you install redscript? '
-        'See https://github.com/jac3km4/redscript?tab=readme-ov-file#integrating-with-the-game.');
-    exit(2);
-  }
-  final scriptsDir = Directory(p.join(redscriptDir.path, config.name));
-
-  if (scriptsDir.existsSync()) {
-    scriptsDir.deleteSync(recursive: true);
-  }
-  scriptsDir.createSync();
-  final srcDir = (bundleOption) ? config.distDir : config.redscriptSrcDir;
-  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
-
-  copyDirectorySync(
-    srcDir,
-    dstDir,
-    filter: (File file) => filterRedscriptFile(file, mode),
-  );
-  if (bundleOption && cleanOption) {
-    srcDir.deleteSync(recursive: true);
-  }
+  _installRedscript(config, mode, bundleOption, cleanOption);
+  _installCET(config, mode, bundleOption, cleanOption);
 }
 
 void installPlugin(RedConfig config, BundleMode mode) {
@@ -68,5 +45,57 @@ void installPlugin(RedConfig config, BundleMode mode) {
     srcPluginFile.copySync(dstPluginFile.path);
   } catch (error) {
     Logger.info('Cannot install DLL plugin while the game is running.');
+  }
+}
+
+void _installRedscript(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
+  final redscriptDir = config.installRedscriptDir;
+
+  if (!redscriptDir.existsSync()) {
+    Logger.error('Could not find redscript directory in ${redscriptDir.path.path}.');
+    Logger.info('Did you install redscript? '
+        'See https://github.com/jac3km4/redscript?tab=readme-ov-file#integrating-with-the-game.');
+    return;
+  }
+  final scriptsDir = Directory(p.join(redscriptDir.path, config.name));
+
+  if (scriptsDir.existsSync()) {
+    scriptsDir.deleteSync(recursive: true);
+  }
+  scriptsDir.createSync();
+  final srcDir = (bundleOption) ? config.distDir : config.redscriptSrcDir;
+  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
+
+  copyDirectorySync(
+    srcDir,
+    dstDir,
+    filter: (File file) => filterRedscriptFile(file, mode),
+  );
+  if (bundleOption && cleanOption) {
+    srcDir.deleteSync(recursive: true);
+  }
+}
+
+void _installCET(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
+  final cetDir = config.installCETDir;
+
+  if (!cetDir.existsSync()) {
+    Logger.error('Could not find CET directory in ${cetDir.path.path}.');
+    Logger.info('Did you install CET? '
+        'See https://wiki.redmodding.org/cyber-engine-tweaks/getting-started/installing.');
+    return;
+  }
+  final scriptsDir = Directory(p.join(cetDir.path, config.name));
+
+  if (scriptsDir.existsSync()) {
+    deleteCETDirectorySync(scriptsDir);
+  }
+  scriptsDir.createSync();
+  final srcDir = (bundleOption) ? config.distDir : config.cetSrcDir;
+  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
+
+  copyDirectorySync(srcDir, dstDir);
+  if (bundleOption && cleanOption) {
+    srcDir.deleteSync(recursive: true);
   }
 }

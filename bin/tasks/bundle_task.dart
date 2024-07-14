@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import '../data/red_config.dart';
 import '../data/script_file.dart';
 import '../data/script_module.dart';
-import '../extensions/chalk_ext.dart';
+import '../extensions/path_ext.dart';
 import '../logger.dart';
 
 enum BundleMode {
@@ -15,37 +15,87 @@ enum BundleMode {
 }
 
 class BundleInfo {
-  final List<ScriptModule> modules;
+  final BundleRedscriptInfo redscriptInfo;
+  final BundleCETInfo cetInfo;
   final int size;
 
   const BundleInfo({
-    required this.modules,
+    required this.redscriptInfo,
+    required this.cetInfo,
     required this.size,
   });
 }
 
+class BundleRedscriptInfo {
+  final List<ScriptModule> modules;
+  final int size;
+
+  const BundleRedscriptInfo({
+    this.modules = const [],
+    this.size = 0,
+  });
+}
+
+class BundleCETInfo {
+  final int files;
+  final int size;
+
+  const BundleCETInfo({
+    this.files = 0,
+    this.size = 0,
+  });
+}
+
 BundleInfo bundle(RedConfig config, BundleMode mode) {
-  final srcPath = config.scripts!.redscript!.src;
-
-  if (srcPath.isEmpty) {
-    Logger.error('Missing path to scripts in ${'red.config.json'.bold} (${'scripts.redscript.src'.cyan}).');
+  if (config.isMissingScripts()) {
+    Logger.error(
+        'You need to provide a path to scripts in ${'red.config.json'.bold} for Redscript or CET (${'one required'.cyan}).');
     exit(2);
   }
+  var redInfo = BundleRedscriptInfo();
+  var cetInfo = BundleCETInfo();
+
+  if (config.hasRedScripts()) {
+    redInfo = _bundleRedscript(config, mode);
+  }
+  if (config.hasCETScripts()) {
+    cetInfo = _bundleCET(config, mode);
+  }
+  return BundleInfo(
+    redscriptInfo: redInfo,
+    cetInfo: cetInfo,
+    size: redInfo.size + cetInfo.size,
+  );
+}
+
+BundleRedscriptInfo _bundleRedscript(RedConfig config, BundleMode mode) {
   final srcDir = config.redscriptSrcDir;
-
-  if (!srcDir.existsSync()) {
-    Logger.error('Path not found: ${srcPath.path}.');
-    exit(2);
-  }
   final scripts = getScripts(srcDir, mode);
   final modules = getModules(scripts, mode);
   final size = bundleModules(modules, config, mode);
 
   if (mode == BundleMode.release && config.license) {
-    config.licenseFile.copySync(p.join(config.outputDir.path, 'LICENSE'));
+    config.licenseFile.copySync(p.join(config.outputRedscriptDir.path, 'LICENSE'));
   }
-  return BundleInfo(
+  return BundleRedscriptInfo(
     modules: modules,
+    size: size,
+  );
+}
+
+BundleCETInfo _bundleCET(RedConfig config, BundleMode mode) {
+  final outputDir = config.outputCETDir;
+
+  if (outputDir.existsSync()) {
+    deleteCETDirectorySync(outputDir);
+  }
+  outputDir.createSync(recursive: true);
+  final srcDir = config.cetSrcDir;
+  final scripts = copyDirectorySync(srcDir, outputDir);
+  int size = scripts.map((file) => file.statSync().size).reduce((previous, current) => previous + current);
+
+  return BundleCETInfo(
+    files: scripts.length,
     size: size,
   );
 }
@@ -63,6 +113,8 @@ void bundlePlugin(RedConfig config, BundleMode mode) {
 
   srcPluginFile.copySync(dstPluginFile.path);
 }
+
+// Redscript
 
 List<ScriptFile> getScripts(Directory srcDir, BundleMode mode) {
   final entries = srcDir.listSync(recursive: true, followLinks: false);
@@ -106,7 +158,7 @@ List<ScriptModule> getModules(List<ScriptFile> scripts, BundleMode _mode) {
 }
 
 int bundleModules(List<ScriptModule> modules, RedConfig config, BundleMode mode) {
-  final outputDir = config.outputDir;
+  final outputDir = config.outputRedscriptDir;
 
   if (outputDir.existsSync()) {
     outputDir.deleteSync(recursive: true);
@@ -120,8 +172,8 @@ int bundleModules(List<ScriptModule> modules, RedConfig config, BundleMode mode)
   return size;
 }
 
-void logModules(List<ScriptModule> modules) {
-  for (final module in modules) {
+void logRedscript(BundleRedscriptInfo info) {
+  for (final module in info.modules) {
     String scripts = '${module.scripts.length} script';
 
     if (module.scripts.length > 1) {
@@ -150,4 +202,33 @@ bool filterRedscriptFile(FileSystemEntity file, BundleMode mode) {
     return true;
   }
   return !name.endsWith('Test.reds');
+}
+
+// CET
+
+void logCET(BundleCETInfo info) {
+  String scripts = '${info.files} script';
+
+  if (info.files > 1) {
+    scripts += 's';
+  }
+  Logger.log('· CET content (${scripts.cyan})');
+  Logger.log('');
+}
+
+/// Remove all CET mod content except .log / .sqlite3 files.
+void deleteCETDirectorySync(Directory source) {
+  final entities = source.listSync();
+
+  for (final entity in entities) {
+    if (entity is Directory) {
+      entity.deleteSync(recursive: true);
+    } else if (entity is File && _filterCETFile(entity)) {
+      entity.deleteSync();
+    }
+  }
+}
+
+bool _filterCETFile(File file) {
+  return !file.path.endsWith('.log') && !file.path.endsWith('.sqlite3');
 }

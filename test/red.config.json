@@ -1,12 +1,15 @@
 {
   "name": "Awesome",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "licence": true,
   "game": "game\\",
   "dist": "dist\\",
   "scripts": {
     "redscript": {
-      "src": "scripts\\Awesome\\"
+      "src": "scripts\\redscript\\"
+    },
+    "cet": {
+      "src": "scripts\\cet\\"
     }
   },
   "plugin": {

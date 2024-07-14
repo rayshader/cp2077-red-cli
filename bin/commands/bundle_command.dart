@@ -47,7 +47,8 @@ class BundleCommand extends Command {
     bundlePlugin(config, mode);
     int elapsedTime = DateTime.now().difference(start).inMilliseconds;
 
-    logModules(info.modules);
+    logRedscript(info.redscriptInfo);
+    logCET(info.cetInfo);
     Logger.done('Bundle ${config.name.bold} ready in ${formatTime(elapsedTime).bold} (${formatSize(info.size).cyan})');
   }
 }

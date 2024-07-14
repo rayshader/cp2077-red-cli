@@ -36,13 +36,33 @@ class RedConfig {
 
   Directory get redscriptOutputDir => scripts!.redscript!.outputDir;
 
-  Directory get outputDir => Directory(p.join(dist, scripts!.redscript!.output, name));
+  Directory get cetSrcDir => scripts!.cet!.srcDir;
+
+  Directory get cetOutputDir => scripts!.cet!.outputDir;
+
+  Directory get outputRedscriptDir => Directory(p.join(dist, scripts!.redscript!.output, name));
+
+  Directory get outputCETDir => Directory(p.join(dist, scripts!.cet!.output, name));
 
   Directory get installRedscriptDir => Directory(p.join(game, scripts!.redscript!.output));
+
+  Directory get installCETDir => Directory(p.join(game, scripts!.cet!.output));
 
   Directory get installPluginDir => Directory(p.join(game, 'red4ext', 'plugins'));
 
   File get archiveFile => File('$name-v$version.zip');
+
+  bool isMissingScripts() {
+    return !redscriptSrcDir.existsSync() && !cetSrcDir.existsSync();
+  }
+
+  bool hasRedScripts() {
+    return redscriptSrcDir.existsSync();
+  }
+
+  bool hasCETScripts() {
+    return cetSrcDir.existsSync();
+  }
 
   factory RedConfig.fromJson(Map<String, dynamic> json) {
     return RedConfig(
@@ -59,25 +79,30 @@ class RedConfig {
 
 class RedConfigScripts {
   RedConfigRedscript? redscript;
+  RedConfigCET? cet;
 
   RedConfigScripts({
     this.redscript,
+    this.cet,
   });
 
   factory RedConfigScripts.fromJson(Map<String, dynamic> json) {
     return RedConfigScripts(
       redscript: RedConfigRedscript.fromJson(json['redscript'] ?? {}),
+      cet: RedConfigCET.fromJson(json['cet'] ?? {}),
     );
   }
 }
 
 class RedConfigRedscript {
+  static const String defaultOutput = 'r6\\scripts\\';
+
   String src;
   String output;
 
   RedConfigRedscript({
     this.src = '',
-    this.output = 'r6\\scripts',
+    this.output = RedConfigRedscript.defaultOutput,
   });
 
   Directory get srcDir => Directory(src);
@@ -87,7 +112,30 @@ class RedConfigRedscript {
   factory RedConfigRedscript.fromJson(Map<String, dynamic> json) {
     return RedConfigRedscript(
       src: json['src'] ?? '',
-      output: json['output'] ?? 'r6\\scripts\\',
+      output: json['output'] ?? RedConfigRedscript.defaultOutput,
+    );
+  }
+}
+
+class RedConfigCET {
+  static const String defaultOutput = "bin\\x64\\plugins\\cyber_engine_tweaks\\mods\\";
+
+  String src;
+  String output;
+
+  RedConfigCET({
+    this.src = '',
+    this.output = RedConfigCET.defaultOutput,
+  });
+
+  Directory get srcDir => Directory(src);
+
+  Directory get outputDir => Directory(output);
+
+  factory RedConfigCET.fromJson(Map<String, dynamic> json) {
+    return RedConfigCET(
+      src: json['src'] ?? '',
+      output: json['output'] ?? RedConfigCET.defaultOutput,
     );
   }
 }
@@ -141,10 +189,15 @@ RedConfig? getConfig() {
   config.dist = config.dist.isEmpty ? 'dist\\' : config.dist;
   config.scripts ??= RedConfigScripts(
     redscript: RedConfigRedscript(),
+    cet: RedConfigCET(),
   );
   config.scripts!.redscript ??= RedConfigRedscript();
+  config.scripts!.cet ??= RedConfigCET();
   if (config.scripts!.redscript!.output.isEmpty) {
-    config.scripts!.redscript!.output = 'r6\\scripts\\';
+    config.scripts!.redscript!.output = RedConfigRedscript.defaultOutput;
+  }
+  if (config.scripts!.cet!.output.isEmpty) {
+    config.scripts!.cet!.output = RedConfigCET.defaultOutput;
   }
   Logger.log('');
   return config;

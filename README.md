@@ -48,6 +48,10 @@ root directory of your project. The content should look like this:
     "redscript": {
       "src": "<path-to-scripts>",
       "output": "<path-to-redscript>"
+    },
+    "cet": {
+      "src": "<path-to-scripts>",
+      "output": "<path-to-cet>"
     }
   },
   "plugin": {
@@ -57,21 +61,25 @@ root directory of your project. The content should look like this:
 }
 ```
 
-|             Field | Required | Default            | Description                                                                                                                                                                               |
-|------------------:|:--------:|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|              name |   yes    |                    | Name of your mod. It will be used as a folder name too.                                                                                                                                   |
-|           version |    no    | `"0.1.0"`          | Version of your mod. It will be included in the bundle of your scripts.                                                                                                                   |
-|           license |    no    | `false`            | `true` to add LICENSE file, from the root directory, when packing a release.                                                                                                              |
-|              game |    no    | *auto-detect path* | Absolute path to `Cyberpunk 2077` directory. You can omit or leave empty this field to auto-detect the path (Steam, GOG, Epic).                                                           |
-|              dist |   yes    | `"dist\"`          | Path to output bundle of your scripts. It is relative to the root directory of your project.                                                                                              |
-|            &nbsp; |
-| scripts.redscript |   yes    |
-|               src |   yes    |                    | Relative path of your scripts (.reds).                                                                                                                                                    |
-|            output |    no    | `"r6\scripts\"`    | Relative path of Redscript to install your bundle in game's directory. `name` will be appended for you (e.g. `"r6\scripts\<name>"`). You can omit or leave empty to use the default path. |
-|            &nbsp; |
-|            plugin |    no    |                    | **Only when making a RED4ext plugin**                                                                                                                                                     |
-|             debug |   yes    |                    | Relative path of RED4ext plugin build in Debug mode (using `"<name>.dll"`).                                                                                                               |
-|           release |   yes    |                    | Relative path of RED4ext plugin build in Release mode (using `"<name>.dll"`).                                                                                                             |
+|             Field | Required | Default                                       | Description                                                                                                                                                                                                        |
+|------------------:|:--------:|-----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|              name |   yes    |                                               | Name of your mod. It will be used as a folder name too.                                                                                                                                                            |
+|           version |    no    | `"0.1.0"`                                     | Version of your mod. It will be included in the bundle of your scripts.                                                                                                                                            |
+|           license |    no    | `false`                                       | `true` to add LICENSE file, from the root directory, when packing a release.                                                                                                                                       |
+|              game |    no    | *auto-detect path*                            | Absolute path to `Cyberpunk 2077` directory. You can omit or leave empty this field to auto-detect the path (Steam, GOG, Epic).                                                                                    |
+|              dist |   yes    | `"dist\"`                                     | Path to output bundle of your scripts. It is relative to the root directory of your project.                                                                                                                       |
+|            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
+| scripts.redscript |    no    |                                               | **Required when `scripts.cet` is not defined.**                                                                                                                                                                    |
+|               src |   yes    |                                               | Relative path of your scripts (.reds).                                                                                                                                                                             |
+|            output |    no    | `"r6\scripts\"`                               | Relative path of Redscript to install your bundle in game's directory. `name` will be appended for you (e.g. `"r6\scripts\<name>"`). You can omit or leave empty to use the default path.                          |
+|            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
+|       scripts.cet |    no    |                                               | **Required when `scripts.redscript` is not defined.**                                                                                                                                                                |
+|               src |   yes    |                                               | Relative path of your scripts (.lua).                                                                                                                                                                              |
+|            output |    no    | `"bin\x64\plugins\cyber_engine_tweaks\mods\"` | Relative path of CET to install your scripts in game's directory. `name` will be appended for you (e.g. `"bin\x64\plugins\cyber_engine_tweaks\mods\<name>"`). You can omit or leave empty to use the default path. |
+|            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
+|            plugin |    no    |                                               | **Only when making a RED4ext plugin**                                                                                                                                                                              |
+|             debug |   yes    |                                               | Relative path of RED4ext plugin build in Debug mode (using `"<name>.dll"`).                                                                                                                                        |
+|           release |   yes    |                                               | Relative path of RED4ext plugin build in Release mode (using `"<name>.dll"`).                                                                                                                                      |
 
 ## Usage
 
@@ -147,8 +155,9 @@ You can install your scripts in the game's directory with a simple command, from
 red-cli install
 ```
 
-It will install scripts in `<game>\r6\scripts\<name>` for you. If you have configured RED4ext plugin, it will also 
-install the library in `<game>\red4ext\plugins\<name>\<name>.dll`. It will run in `debug` mode by default to include 
+It will install scripts in `<game>\r6\scripts\<name>` for you. If you have configured CET, it will install scripts in 
+`<game>\bin\x64\plugins\cyber_engine_tweaks\mods\<name>`. If you have configured RED4ext plugin, it will also install 
+the library in `<game>\red4ext\plugins\<name>\<name>.dll`. It will run in `debug` mode by default to include 
 test scripts.
 
 You can use option `--bundle` to bundle your scripts before installing them. It will show you how it will look like when
@@ -164,10 +173,20 @@ debug compilation errors.
 red-cli pack
 ```
 
-It will bundle scripts and put them in an archive, ready to release to users. If you have configured RED4ext plugin, it 
-will also add the library file. This is how it should look like with the example you can find in [test/]:
+It will bundle scripts and put them in an archive, ready to release to users. If you have configured CET, it will add 
+the Lua scripts. If you have configured RED4ext plugin, it will add the library file. This is how it should look like 
+with the example you can find in [test/]:
 ```
 Awesome-v0.1.0.zip
+|-- bin\
+    |-- x64\
+        |-- plugins\
+            |-- cyber_engine_tweaks\
+                |-- mods\
+                    |-- Awesome\
+                        |-- init.lua
+                        |-- modules\
+                            |-- gui.lua
 |-- r6\
     |-- scripts\
         |-- Awesome\
