@@ -1,5 +1,6 @@
-import 'package:path/path.dart' as p;
 import 'dart:io';
+
+import 'package:path/path.dart' as p;
 
 typedef RuleCallback = bool Function(RegExpMatch match);
 
@@ -11,8 +12,29 @@ class Rule {
 }
 
 class RedscriptAst {
-  static final RegExp moduleRule = RegExp('^[ \t]*module[ \t]+(?<module>[A-Za-z_.*]+)');
-  static final RegExp importRule = RegExp('^[ \t]*import[ \t]+(?<dependency>[A-Za-z_.*]+)');
+  static final RegExp moduleRule = RegExp(r'^[ \t]*module[ \t]+(?<module>[A-Za-z_.*]+)');
+  static final RegExp moduleExistsRule = RegExp(r'^[ \t]*@if[ \t]*\(!?ModuleExists\("(?<dependency>[A-Za-z_.*]+)"\)\)');
+  static final RegExp importRule = RegExp(r'^[ \t]*import[ \t]+(?<dependency>[A-Za-z_.*]+)');
+}
+
+class DependencyStatement {
+  final String? annotation;
+  final String dependency;
+
+  const DependencyStatement(this.dependency, this.annotation);
+
+  int compareTo(DependencyStatement other) => dependency.compareTo(other.dependency);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DependencyStatement &&
+          runtimeType == other.runtimeType &&
+          annotation == other.annotation &&
+          dependency == other.dependency;
+
+  @override
+  int get hashCode => annotation.hashCode ^ dependency.hashCode;
 }
 
 class ScriptFile {
@@ -20,14 +42,16 @@ class ScriptFile {
   final String fileName;
 
   String module = 'global';
-  final List<String> dependencies = [];
+  final List<DependencyStatement> dependencies = [];
   final List<String> lines = [];
+  final List<String> annotations = [];
 
   late final List<Rule> rules;
 
   ScriptFile(this.relativePath, this.fileName) {
     rules = [
       Rule(regex: RedscriptAst.moduleRule, callback: onModuleRule),
+      Rule(regex: RedscriptAst.moduleExistsRule, callback: onModuleExistsRule),
       Rule(regex: RedscriptAst.importRule, callback: onImportRule),
     ];
   }
@@ -58,6 +82,9 @@ class ScriptFile {
         }
       }
       if (!matched) {
+        if (annotations.isNotEmpty) {
+          this.lines.add(annotations.removeAt(0));
+        }
         this.lines.add(line);
       }
     }
@@ -68,17 +95,28 @@ class ScriptFile {
     return false;
   }
 
-  bool onImportRule(RegExpMatch match) {
-    final dependency = match.namedGroup('dependency')!;
-
-    addDependency(dependency);
+  bool onModuleExistsRule(RegExpMatch match) {
+    annotations.add(match.input);
     return false;
   }
 
-  void addDependency(String dependency) {
-    if (dependencies.contains(dependency)) {
+  bool onImportRule(RegExpMatch match) {
+    final dependency = match.namedGroup('dependency')!;
+    String? annotation;
+
+    if (annotations.isNotEmpty) {
+      annotation = annotations.removeAt(0);
+    }
+    addDependency(dependency, annotation);
+    return false;
+  }
+
+  void addDependency(String dependency, [String? annotation]) {
+    final statement = DependencyStatement(dependency, annotation);
+
+    if (dependencies.contains(statement)) {
       return;
     }
-    dependencies.add(dependency);
+    dependencies.add(statement);
   }
 }

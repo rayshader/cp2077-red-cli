@@ -7,7 +7,7 @@ import 'red_config.dart';
 import 'script_file.dart';
 
 class ScriptModule {
-  final List<String> dependencies = [];
+  final List<DependencyStatement> dependencies = [];
   final List<ScriptFile> scripts = [];
   final String name;
 
@@ -23,9 +23,9 @@ class ScriptModule {
 
   void addScript(ScriptFile script) {
     scripts.add(script);
-    for (final dependency in script.dependencies) {
-      if (!dependencies.contains(dependency)) {
-        dependencies.add(dependency);
+    for (final statement in script.dependencies) {
+      if (!dependencies.contains(statement)) {
+        dependencies.add(statement);
       }
     }
     dependencies.sort((a, b) => a.compareTo(b));
@@ -37,8 +37,11 @@ class ScriptModule {
     if (name != 'global') {
       data += 'module $name\n\n';
     }
-    for (final dependency in dependencies) {
-      data += 'import $dependency\n';
+    for (final statement in dependencies) {
+      if (statement.annotation != null) {
+        data += '${statement.annotation}\n';
+      }
+      data += 'import ${statement.dependency}\n';
     }
     if (dependencies.isNotEmpty) {
       data += '\n';
