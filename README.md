@@ -146,6 +146,10 @@ You can use option `--bundle` to bundle your scripts before installing them. It 
 releasing your project with the `pack` command. You should not use this option when debugging, as it will be harder to 
 debug compilation errors.
 
+> [!NOTE]
+> If option `plugin` is enabled, it will silently fail to install the DLL while the game is running. All scripts will be 
+> installed anyway.
+
 ### Pack
 ```shell
 red-cli pack

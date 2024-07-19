@@ -55,8 +55,18 @@ void installPlugin(RedConfig config, BundleMode mode) {
   File srcPluginFile = File(p.join(pluginPath, '${config.name}.dll'));
   Directory dstPluginDir = Directory(p.join(installDir.path, config.name));
 
-  dstPluginDir.createSync(recursive: true);
+  try {
+    dstPluginDir.createSync(recursive: true);
+  } catch (error) {
+    Logger.error('Failed to create RED4ext directory for the plugin.');
+    Logger.info('Is the game running?');
+    return;
+  }
   File dstPluginFile = File(p.join(dstPluginDir.path, '${config.name}.dll'));
 
-  srcPluginFile.copySync(dstPluginFile.path);
+  try {
+    srcPluginFile.copySync(dstPluginFile.path);
+  } catch (error) {
+    Logger.info('Cannot install DLL plugin while the game is running.');
+  }
 }
