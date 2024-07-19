@@ -5,11 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+------------------------
+
+## [0.2.2] - 2024-07-19
 ### Fixed
 - silently fail to install plugin while the game is running (issue #2).
 
 ### Added
-- environment variable `REDCLI_GAME` to prevent commiting user's game path in 
+- environment variable `REDCLI_GAME` to prevent commiting user's game path in
   `red.config.json` when versioning (issue #1).
 
 ------------------------
@@ -40,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - optionally copy LICENSE file in `r6\scripts\<Mod>` in `release` mode.
 
 <!-- Table of releases -->
-[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rayshader/cp2077-red-cli/releases/tag/v0.1.0

@@ -15,7 +15,7 @@ class RedRunner extends CommandRunner {
   RedRunner()
       : super(
           'red-cli',
-          '${'red-cli v0.2.1'.bold}\n'
+          '${'red-cli v0.2.2'.bold}\n'
               '\n'
               'A tool to bundle scripts of a mod for Cyberpunk 2077.',
         );
