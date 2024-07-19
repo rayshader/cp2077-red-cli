@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - silently fail to install plugin while the game is running (issue #2).
 
+### Added
+- environment variable `REDCLI_GAME` to prevent commiting user's game path in 
+  `red.config.json` when versioning (issue #1).
+
 ------------------------
 
 ## [0.2.1] - 2024-07-14

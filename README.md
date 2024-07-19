@@ -75,6 +75,15 @@ root directory of your project. The content should look like this:
 
 ## Usage
 
+If you're using a custom game's path, you can configure an environment variable instead. This is convenient to avoid 
+pushing your local game's path in `red.config.json` when versioning your project.
+
+Define path in `REDCLI_GAME` environment variable, red-cli will use it instead. Reading game's path is done in this 
+order:
+- environment variable
+- `game` key in `red.config.json`
+- auto-detect path (Steam, GOG, Epic)
+
 ### Bundle
 
 You can bundle your scripts like this:

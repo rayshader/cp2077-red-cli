@@ -135,15 +135,9 @@ RedConfig? getConfig() {
     Logger.info('Ignoring license, file not found in ${'LICENSE'.path}.');
     config.license = false;
   }
-  config.game = config.game.isEmpty ? '' : config.game;
-  final gamePath = config.game;
-
-  if (!config.gameDir.existsSync()) {
-    config.game = detectGamePath() ?? '';
-    if (config.game.isEmpty) {
-      Logger.error('Could not find game\'s directory in ${gamePath.path}.');
-    }
-  }
+  config.game = config.game.trim();
+  _resolveGamePath(config);
+  config.dist = config.dist.trim();
   config.dist = config.dist.isEmpty ? 'dist\\' : config.dist;
   config.scripts ??= RedConfigScripts(
     redscript: RedConfigRedscript(),
@@ -162,7 +156,30 @@ final gameDirs = [
   Directory('C:\\Program Files\\Epic Games\\Cyberpunk 2077)')
 ];
 
-String? detectGamePath() {
+void _resolveGamePath(RedConfig config) {
+  final environment = Platform.environment;
+  final gamePath = config.game;
+
+  if (environment.containsKey("REDCLI_GAME")) {
+    config.game = environment["REDCLI_GAME"]!;
+    if (!config.gameDir.existsSync()) {
+      Logger.error(
+          'Could not find game\'s directory in ${config.game.path} using environment variable (${'REDCLI_GAME'.cyan}).');
+      exit(2);
+    }
+    return;
+  }
+  if (config.gameDir.existsSync()) {
+    return;
+  }
+  config.game = _detectGamePath() ?? '';
+  if (config.game.isEmpty) {
+    Logger.error('Could not find game\'s directory in ${gamePath.path}.');
+    exit(2);
+  }
+}
+
+String? _detectGamePath() {
   for (final dir in gameDirs) {
     if (dir.existsSync()) {
       return dir.path;
