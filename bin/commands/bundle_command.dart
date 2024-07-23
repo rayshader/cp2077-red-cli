@@ -38,7 +38,7 @@ class BundleCommand extends Command {
     if (argResults == null) {
       return;
     }
-    BundleMode mode = argResults!.flag('debug') ? BundleMode.debug : BundleMode.release;
+    BundleMode mode = argResults!.flag('release') ? BundleMode.release : BundleMode.debug;
     DateTime start = DateTime.now();
 
     Logger.log('Bundling in ${mode.name.cyan} mode:');

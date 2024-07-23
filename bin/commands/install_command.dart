@@ -50,7 +50,7 @@ class InstallCommand extends Command {
     if (argResults == null) {
       return;
     }
-    BundleMode mode = argResults!.flag('debug') ? BundleMode.debug : BundleMode.release;
+    BundleMode mode = argResults!.flag('release') ? BundleMode.release : BundleMode.debug;
     bool bundle = argResults!.flag('bundle');
     bool clean = argResults!.flag('clean');
     String cleanInfo = clean ? 'clean output' : 'keep output';
