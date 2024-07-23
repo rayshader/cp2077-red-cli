@@ -71,8 +71,8 @@ BundleInfo bundle(RedConfig config, BundleMode mode) {
 BundleRedscriptInfo _bundleRedscript(RedConfig config, BundleMode mode) {
   final srcDir = config.redscriptSrcDir;
   final scripts = getScripts(srcDir, mode);
-  final modules = getModules(scripts, mode);
-  final size = bundleModules(modules, config, mode);
+  final modules = getModules(scripts);
+  final size = bundleModules(modules, config);
 
   if (mode == BundleMode.release && config.license) {
     config.licenseFile.copySync(p.join(config.outputRedscriptDir.path, 'LICENSE'));
@@ -129,7 +129,7 @@ List<ScriptFile> getScripts(Directory srcDir, BundleMode mode) {
   }).toList();
 }
 
-List<ScriptModule> getModules(List<ScriptFile> scripts, BundleMode _mode) {
+List<ScriptModule> getModules(List<ScriptFile> scripts) {
   List<ScriptModule> modules = [];
 
   for (final script in scripts) {
@@ -157,7 +157,7 @@ List<ScriptModule> getModules(List<ScriptFile> scripts, BundleMode _mode) {
   return modules;
 }
 
-int bundleModules(List<ScriptModule> modules, RedConfig config, BundleMode mode) {
+int bundleModules(List<ScriptModule> modules, RedConfig config) {
   final outputDir = config.outputRedscriptDir;
 
   if (outputDir.existsSync()) {
