@@ -32,10 +32,10 @@ ArchiveInfo pack(RedConfig config, BundleMode mode, bool clean) {
     final encoder = ZipFileEncoder();
 
     encoder.create(archiveFile.path);
-    encoder.addDirectory(config.distDir, includeDirName: false);
+    encoder.addDirectory(config.stageDir, includeDirName: false);
     encoder.close();
     if (clean) {
-      config.distDir.deleteSync(recursive: true);
+      config.stageDir.deleteSync(recursive: true);
     }
     final totalSize = archiveFile.statSync().size;
 

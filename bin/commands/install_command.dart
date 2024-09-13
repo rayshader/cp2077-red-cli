@@ -41,7 +41,7 @@ class InstallCommand extends Command {
       'clean',
       negatable: true,
       defaultsTo: true,
-      help: 'Remove ${config.dist.path} output after command succeed.',
+      help: 'Remove ${config.stage.path} output after command succeed.',
     );
   }
 

@@ -6,14 +6,16 @@ import 'package:path/path.dart' as p;
 
 import '../extensions/chalk_ext.dart';
 import '../logger.dart';
+import '../tasks/bundle_task.dart';
+import 'script_language.dart';
 
 class RedConfig {
   String name;
   String version;
   bool license;
   String game;
-  String dist;
-  RedConfigScripts? scripts;
+  String stage;
+  RedConfigScripts scripts;
   RedConfigPlugin? plugin;
 
   RedConfig({
@@ -21,8 +23,8 @@ class RedConfig {
     this.license = false,
     this.version = '',
     this.game = '',
-    this.dist = 'dist\\',
-    this.scripts,
+    this.stage = 'stage\\',
+    this.scripts = const RedConfigScripts(),
     this.plugin,
   });
 
@@ -30,84 +32,126 @@ class RedConfig {
 
   Directory get gameDir => Directory(game);
 
-  Directory get distDir => Directory(dist);
+  Directory get stageDir => Directory(stage);
 
-  Directory get redscriptSrcDir => scripts!.redscript!.srcDir;
+  File get archiveFile => File('$name-$version.zip');
 
-  Directory get redscriptOutputDir => scripts!.redscript!.outputDir;
-
-  Directory get cetSrcDir => scripts!.cet!.srcDir;
-
-  Directory get cetOutputDir => scripts!.cet!.outputDir;
-
-  Directory get outputRedscriptDir => Directory(p.join(dist, scripts!.redscript!.output, name));
-
-  Directory get outputCETDir => Directory(p.join(dist, scripts!.cet!.output, name));
-
-  Directory get installRedscriptDir => Directory(p.join(game, scripts!.redscript!.output));
-
-  Directory get installCETDir => Directory(p.join(game, scripts!.cet!.output));
-
-  Directory get installPluginDir => Directory(p.join(game, 'red4ext', 'plugins'));
-
-  File get archiveFile => File('$name-v$version.zip');
-
-  bool isMissingScripts() {
-    return !redscriptSrcDir.existsSync() && !cetSrcDir.existsSync();
+  bool hasScripts() {
+    return hasRedscript() || hasCET();
   }
 
-  bool hasRedScripts() {
-    return redscriptSrcDir.existsSync();
+  bool hasRedscript() {
+    return scripts.redscript?.exists ?? false;
   }
 
-  bool hasCETScripts() {
-    return cetSrcDir.existsSync();
+  bool hasCET() {
+    return scripts.cet?.exists ?? false;
+  }
+
+  bool hasRED4ext(BundleMode mode) {
+    return ((mode == BundleMode.debug) ? plugin?.debugDir.existsSync() : plugin?.releaseDir.existsSync()) ?? false;
+  }
+
+  Directory getStageDir(ScriptLanguage language) {
+    switch (language) {
+      case ScriptLanguage.redscript:
+        return Directory(p.join(stage, scripts.redscript!.output, name));
+      case ScriptLanguage.cet:
+        return Directory(p.join(stage, scripts.cet!.output, name));
+      case ScriptLanguage.red4ext:
+        return Directory(p.join(stage, 'red4ext', 'plugins', name));
+    }
+  }
+
+  Directory getLanguageDir(ScriptLanguage language) {
+    switch (language) {
+      case ScriptLanguage.redscript:
+        return Directory(p.join(game, scripts.redscript!.output));
+      case ScriptLanguage.cet:
+        return Directory(p.join(game, scripts.cet!.output));
+      case ScriptLanguage.red4ext:
+        return Directory(p.join(game, 'red4ext', 'plugins'));
+    }
+  }
+
+  Directory getInstallDir(ScriptLanguage language) {
+    switch (language) {
+      case ScriptLanguage.redscript:
+        return Directory(p.join(game, scripts.redscript!.output, name));
+      case ScriptLanguage.cet:
+        return Directory(p.join(game, scripts.cet!.output, name));
+      case ScriptLanguage.red4ext:
+        return Directory(p.join(game, 'red4ext', 'plugins', name));
+    }
+  }
+
+  File getPluginFile(BundleMode mode) {
+    final pluginPath = (mode == BundleMode.debug) ? plugin!.debug : plugin!.release;
+
+    return File(p.join(pluginPath, '$name.dll'));
+  }
+
+  void copyLicenseSync(ScriptLanguage language) {
+    licenseFile.copySync(p.join(getStageDir(language).path, 'LICENSE'));
   }
 
   factory RedConfig.fromJson(Map<String, dynamic> json) {
+    // Deprecated, still present to support versions below 0.3.0
+    if (json['dist'] != null) {
+      json['stage'] = json['dist'];
+    }
     return RedConfig(
       name: json['name'] ?? '',
       version: json['version'] ?? '',
       license: json['license'] ?? false,
       game: json['game'] ?? '',
-      dist: json['dist'] ?? 'dist\\',
-      scripts: RedConfigScripts.fromJson(json['scripts'] ?? {}),
+      stage: json['stage'] ?? 'stage\\',
+      scripts: RedConfigScripts.fromJson(json['scripts']),
       plugin: json['plugin'] != null ? RedConfigPlugin.fromJson(json['plugin']) : null,
     );
   }
 }
 
 class RedConfigScripts {
-  RedConfigRedscript? redscript;
-  RedConfigCET? cet;
+  final RedConfigRedscript? redscript;
+  final RedConfigCET? cet;
 
-  RedConfigScripts({
+  const RedConfigScripts({
     this.redscript,
     this.cet,
   });
 
   factory RedConfigScripts.fromJson(Map<String, dynamic> json) {
     return RedConfigScripts(
-      redscript: RedConfigRedscript.fromJson(json['redscript'] ?? {}),
-      cet: RedConfigCET.fromJson(json['cet'] ?? {}),
+      redscript: json['redscript'] != null ? RedConfigRedscript.fromJson(json['redscript']) : null,
+      cet: json['cet'] != null ? RedConfigCET.fromJson(json['cet']) : null,
     );
   }
 }
 
-class RedConfigRedscript {
-  static const String defaultOutput = 'r6\\scripts\\';
+abstract class RedConfigScriptLanguage {
+  final String src;
+  final String output;
 
-  String src;
-  String output;
-
-  RedConfigRedscript({
-    this.src = '',
-    this.output = RedConfigRedscript.defaultOutput,
-  });
+  bool get exists => srcDir.existsSync();
 
   Directory get srcDir => Directory(src);
 
   Directory get outputDir => Directory(output);
+
+  const RedConfigScriptLanguage({
+    required this.src,
+    required this.output,
+  });
+}
+
+class RedConfigRedscript extends RedConfigScriptLanguage {
+  static const String defaultOutput = 'r6\\scripts\\';
+
+  const RedConfigRedscript({
+    super.src = '',
+    super.output = RedConfigRedscript.defaultOutput,
+  });
 
   factory RedConfigRedscript.fromJson(Map<String, dynamic> json) {
     return RedConfigRedscript(
@@ -117,20 +161,13 @@ class RedConfigRedscript {
   }
 }
 
-class RedConfigCET {
+class RedConfigCET extends RedConfigScriptLanguage {
   static const String defaultOutput = "bin\\x64\\plugins\\cyber_engine_tweaks\\mods\\";
 
-  String src;
-  String output;
-
-  RedConfigCET({
-    this.src = '',
-    this.output = RedConfigCET.defaultOutput,
+  const RedConfigCET({
+    super.src = '',
+    super.output = RedConfigCET.defaultOutput,
   });
-
-  Directory get srcDir => Directory(src);
-
-  Directory get outputDir => Directory(output);
 
   factory RedConfigCET.fromJson(Map<String, dynamic> json) {
     return RedConfigCET(
@@ -185,20 +222,8 @@ RedConfig? getConfig() {
   }
   config.game = config.game.trim();
   _resolveGamePath(config);
-  config.dist = config.dist.trim();
-  config.dist = config.dist.isEmpty ? 'dist\\' : config.dist;
-  config.scripts ??= RedConfigScripts(
-    redscript: RedConfigRedscript(),
-    cet: RedConfigCET(),
-  );
-  config.scripts!.redscript ??= RedConfigRedscript();
-  config.scripts!.cet ??= RedConfigCET();
-  if (config.scripts!.redscript!.output.isEmpty) {
-    config.scripts!.redscript!.output = RedConfigRedscript.defaultOutput;
-  }
-  if (config.scripts!.cet!.output.isEmpty) {
-    config.scripts!.cet!.output = RedConfigCET.defaultOutput;
-  }
+  config.stage = config.stage.trim();
+  config.stage = config.stage.isEmpty ? 'stage\\' : config.stage;
   Logger.log('');
   return config;
 }

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "licence": true,
   "game": "game\\",
-  "dist": "dist\\",
+  "stage": "stage\\",
   "scripts": {
     "redscript": {
       "src": "scripts\\redscript\\"

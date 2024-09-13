@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - flags `--debug` / `--release` are now applied as expected with `bundle` and
   `install` commands.
 
+### Changed
+- option `dist` is now deprecated in favor of option `stage` in `red.config.json`.
+- filename of an archive is now `<name>-X.Y.Z.zip` instead of `<name>-vX.Y.Z.zip`.
+
 ### Added
 - support to install / pack CET scripts using `scripts.cet` options in `red.config.json`.
 

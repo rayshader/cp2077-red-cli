@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../data/red_config.dart';
+import '../data/script_language.dart';
 import '../extensions/chalk_ext.dart';
 import '../extensions/path_ext.dart';
 import '../logger.dart';
@@ -14,88 +15,90 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
   }
   _installRedscript(config, mode, bundleOption, cleanOption);
   _installCET(config, mode, bundleOption, cleanOption);
+  if (bundleOption && cleanOption) {
+    config.stageDir.deleteSync(recursive: true);
+  }
 }
 
 void installPlugin(RedConfig config, BundleMode mode) {
-  if (config.plugin == null) {
+  if (!config.hasRED4ext(mode)) {
     return;
   }
-  final installDir = config.installPluginDir;
+  final languageDir = config.getLanguageDir(ScriptLanguage.red4ext);
 
-  if (!installDir.existsSync()) {
-    Logger.error('Could not find red4ext directory in ${installDir.path.path}.');
+  if (!languageDir.existsSync()) {
+    Logger.error('Could not find red4ext directory in ${languageDir.path.path}.');
     Logger.info('Did you install RED4ext? '
         'See https://docs.red4ext.com/getting-started/installing-red4ext.');
     exit(2);
   }
-  String pluginPath = (mode == BundleMode.debug) ? config.plugin!.debug : config.plugin!.release;
-  File srcPluginFile = File(p.join(pluginPath, '${config.name}.dll'));
-  Directory dstPluginDir = Directory(p.join(installDir.path, config.name));
+  File srcFile = config.getPluginFile(mode);
+  Directory installDir = config.getInstallDir(ScriptLanguage.red4ext);
 
   try {
-    dstPluginDir.createSync(recursive: true);
+    installDir.createSync(recursive: true);
   } catch (error) {
     Logger.error('Failed to create RED4ext directory for the plugin.');
     Logger.info('Is the game running?');
     return;
   }
-  File dstPluginFile = File(p.join(dstPluginDir.path, '${config.name}.dll'));
+  File dstFile = File(p.join(installDir.path, '${config.name}.dll'));
 
   try {
-    srcPluginFile.copySync(dstPluginFile.path);
+    srcFile.copySync(dstFile.path);
   } catch (error) {
-    Logger.info('Cannot install DLL plugin while the game is running.');
+    Logger.info('Cannot install RED4ext plugin while the game is running.');
   }
 }
 
 void _installRedscript(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
-  final redscriptDir = config.installRedscriptDir;
+  if (!config.hasRedscript()) {
+    return;
+  }
+  final languageDir = config.getLanguageDir(ScriptLanguage.redscript);
 
-  if (!redscriptDir.existsSync()) {
-    Logger.error('Could not find redscript directory in ${redscriptDir.path.path}.');
+  if (!languageDir.existsSync()) {
+    Logger.error('Could not find redscript directory in ${languageDir.path.path}.');
     Logger.info('Did you install redscript? '
         'See https://github.com/jac3km4/redscript?tab=readme-ov-file#integrating-with-the-game.');
     return;
   }
-  final scriptsDir = Directory(p.join(redscriptDir.path, config.name));
+  final installDir = config.getInstallDir(ScriptLanguage.redscript);
 
-  if (scriptsDir.existsSync()) {
-    scriptsDir.deleteSync(recursive: true);
+  if (installDir.existsSync()) {
+    installDir.deleteSync(recursive: true);
   }
-  scriptsDir.createSync();
-  final srcDir = (bundleOption) ? config.distDir : config.redscriptSrcDir;
-  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
+  installDir.createSync();
+  final srcDir = (bundleOption) ? config.stageDir : config.scripts.redscript!.srcDir;
+  final dstDir = (bundleOption) ? config.gameDir : installDir;
 
   copyDirectorySync(
     srcDir,
     dstDir,
     filter: (File file) => filterRedscriptFile(file, mode),
   );
-  if (bundleOption && cleanOption) {
-    srcDir.deleteSync(recursive: true);
-  }
 }
 
 void _installCET(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
-  final cetDir = config.installCETDir;
+  if (!config.hasCET()) {
+    return;
+  }
+  final languageDir = config.getLanguageDir(ScriptLanguage.cet);
 
-  if (!cetDir.existsSync()) {
-    Logger.error('Could not find CET directory in ${cetDir.path.path}.');
+  if (!languageDir.existsSync()) {
+    Logger.error('Could not find CET directory in ${languageDir.path.path}.');
     Logger.info('Did you install CET? '
         'See https://wiki.redmodding.org/cyber-engine-tweaks/getting-started/installing.');
     return;
   }
-  final scriptsDir = Directory(p.join(cetDir.path, config.name));
+  final installDir = config.getInstallDir(ScriptLanguage.cet);
 
-  if (scriptsDir.existsSync()) {
-    deleteCETDirectorySync(scriptsDir);
+  if (installDir.existsSync()) {
+    deleteCETDirectorySync(installDir);
   }
-  scriptsDir.createSync();
-  final srcDir = (bundleOption) ? config.distDir : config.cetSrcDir;
-  final dstDir = (bundleOption) ? config.gameDir : scriptsDir;
+  installDir.createSync();
+  final srcDir = (bundleOption) ? config.stageDir : config.scripts.cet!.srcDir;
+  final dstDir = (bundleOption) ? config.gameDir : installDir;
 
   copyDirectorySync(srcDir, dstDir);
-  if (bundleOption && cleanOption) {
-    srcDir.deleteSync(recursive: true);
-  }
 }

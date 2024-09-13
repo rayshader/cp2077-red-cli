@@ -1,5 +1,5 @@
 # Red CLI
-![Cyberpunk 2077](https://img.shields.io/badge/Cyberpunk%202077-v2.12a-blue)
+![Cyberpunk 2077](https://img.shields.io/badge/Cyberpunk%202077-v2.13-blue)
 ![GitHub License](https://img.shields.io/github/license/rayshader/cp2077-red-cli)
 [![Donate](https://img.shields.io/badge/donate-buy%20me%20a%20coffee-yellow)](https://www.buymeacoffee.com/lpfreelance)
 
@@ -37,24 +37,25 @@ It should show usage information if it is installed correctly.
 
 This tool use a Json file to configure and work with your environment. You must put the file `red.config.json` in the
 root directory of your project. The content should look like this:
-```json
+```json5
 {
   "name": "<name>",
   "version": "<semver>",
   "license": true,
   "game": "<path-to-game>",
-  "dist": "<path-to-output>",
+  // "dist": "<path-of-bundle>",             Deprecated, should be replaced by "stage"
+  "stage": "<path-of-bundle>",
   "scripts": {
-    "redscript": {
+    "redscript": {                        // Define only if you use redscript
       "src": "<path-to-scripts>",
       "output": "<path-to-redscript>"
     },
-    "cet": {
+    "cet": {                              // Define only if you use CET
       "src": "<path-to-scripts>",
       "output": "<path-to-cet>"
     }
   },
-  "plugin": {
+  "plugin": {                             // Define only if you build a RED4ext plugin
     "debug": "build\\Debug\\",
     "release": "build\\Release\\"
   }
@@ -67,13 +68,14 @@ root directory of your project. The content should look like this:
 |           version |    no    | `"0.1.0"`                                     | Version of your mod. It will be included in the bundle of your scripts.                                                                                                                                            |
 |           license |    no    | `false`                                       | `true` to add LICENSE file, from the root directory, when packing a release.                                                                                                                                       |
 |              game |    no    | *auto-detect path*                            | Absolute path to `Cyberpunk 2077` directory. You can omit or leave empty this field to auto-detect the path (Steam, GOG, Epic).                                                                                    |
-|              dist |   yes    | `"dist\"`                                     | Path to output bundle of your scripts. It is relative to the root directory of your project.                                                                                                                       |
+|              dist |    no    | `"stage\"`                                    | **Deprecated** You should use **stage** instead.                                                                                                                                                                   |
+|             stage |    no    | `"stage\"`                                    | Path to output bundle of your scripts. It is relative to the root directory of your project. This is temporary directory to allow red-cli to prepare and bundle files.                                             |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
 | scripts.redscript |    no    |                                               | **Required when `scripts.cet` is not defined.**                                                                                                                                                                    |
 |               src |   yes    |                                               | Relative path of your scripts (.reds).                                                                                                                                                                             |
 |            output |    no    | `"r6\scripts\"`                               | Relative path of Redscript to install your bundle in game's directory. `name` will be appended for you (e.g. `"r6\scripts\<name>"`). You can omit or leave empty to use the default path.                          |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
-|       scripts.cet |    no    |                                               | **Required when `scripts.redscript` is not defined.**                                                                                                                                                                |
+|       scripts.cet |    no    |                                               | **Required when `scripts.redscript` is not defined.**                                                                                                                                                              |
 |               src |   yes    |                                               | Relative path of your scripts (.lua).                                                                                                                                                                              |
 |            output |    no    | `"bin\x64\plugins\cyber_engine_tweaks\mods\"` | Relative path of CET to install your scripts in game's directory. `name` will be appended for you (e.g. `"bin\x64\plugins\cyber_engine_tweaks\mods\<name>"`). You can omit or leave empty to use the default path. |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
@@ -93,6 +95,9 @@ order:
 - auto-detect path (Steam, GOG, Epic)
 
 ### Bundle
+
+> [!NOTE]
+> This feature is redscript only.
 
 You can bundle your scripts like this:
 ```shell
@@ -150,6 +155,7 @@ You can find an example in [test/] of this repository. Download this folder, ope
 commands to see the output.
 
 ### Install
+
 You can install your scripts in the game's directory with a simple command, from your project's directory:
 ```shell
 red-cli install
@@ -173,20 +179,20 @@ debug compilation errors.
 red-cli pack
 ```
 
-It will bundle scripts and put them in an archive, ready to release to users. If you have configured CET, it will add 
-the Lua scripts. If you have configured RED4ext plugin, it will add the library file. This is how it should look like 
-with the example you can find in [test/]:
+It will prepare an archive with scripts / plugin, ready to release to users. If you have configured Redscript, it will 
+add bundled scripts. If you have configured CET, it will add Lua scripts. If you have configured RED4ext plugin, it will
+add the library file. This is how it should look like with the example you can find in [test/]:
 ```
-Awesome-v0.1.0.zip
+Awesome-0.1.0.zip
 |-- bin\
     |-- x64\
         |-- plugins\
             |-- cyber_engine_tweaks\
                 |-- mods\
                     |-- Awesome\
-                        |-- init.lua
                         |-- modules\
                             |-- gui.lua
+                        |-- init.lua
 |-- r6\
     |-- scripts\
         |-- Awesome\
@@ -200,7 +206,14 @@ Awesome-v0.1.0.zip
             |-- Awesome.dll
 ```
 
+## Questions
+
+If you have a bug, please fill an [issue].
+If you have questions or feedback, don't hesitate to ask me on [Discord].
+
 <!-- Table of links -->
 [latest release]: https://github.com/rayshader/cp2077-red-cli/releases/latest
 [environment variables]: https://www.google.com/search?q=add+environment+variable+windows
 [test/]: https://github.com/rayshader/cp2077-red-cli/tree/master/test
+[issue]: https://github.com/rayshader/cp2077-red-cli/issues
+[Discord]: https://discord.com/channels/717692382849663036/1254464502968356965

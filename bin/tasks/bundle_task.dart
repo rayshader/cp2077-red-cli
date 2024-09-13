@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../data/red_config.dart';
 import '../data/script_file.dart';
+import '../data/script_language.dart';
 import '../data/script_module.dart';
 import '../extensions/path_ext.dart';
 import '../logger.dart';
@@ -47,35 +48,32 @@ class BundleCETInfo {
 }
 
 BundleInfo bundle(RedConfig config, BundleMode mode) {
-  if (config.isMissingScripts()) {
+  if (!config.hasScripts()) {
     Logger.error(
-        'You need to provide a path to scripts in ${'red.config.json'.bold} for Redscript or CET (${'one required'.cyan}).');
+        'You need to define scripts in ${'red.config.json'.bold} for Redscript or CET (${'one required'.cyan}).');
     exit(2);
   }
-  var redInfo = BundleRedscriptInfo();
-  var cetInfo = BundleCETInfo();
+  final redscriptInfo = _bundleRedscript(config, mode);
+  final cetInfo = _bundleCET(config, mode);
 
-  if (config.hasRedScripts()) {
-    redInfo = _bundleRedscript(config, mode);
-  }
-  if (config.hasCETScripts()) {
-    cetInfo = _bundleCET(config, mode);
-  }
   return BundleInfo(
-    redscriptInfo: redInfo,
+    redscriptInfo: redscriptInfo,
     cetInfo: cetInfo,
-    size: redInfo.size + cetInfo.size,
+    size: redscriptInfo.size + cetInfo.size,
   );
 }
 
 BundleRedscriptInfo _bundleRedscript(RedConfig config, BundleMode mode) {
-  final srcDir = config.redscriptSrcDir;
-  final scripts = getScripts(srcDir, mode);
+  if (!config.hasRedscript()) {
+    return BundleRedscriptInfo();
+  }
+  final redscriptConfig = config.scripts.redscript!;
+  final scripts = getScripts(redscriptConfig.srcDir, mode);
   final modules = getModules(scripts);
   final size = bundleModules(modules, config);
 
   if (mode == BundleMode.release && config.license) {
-    config.licenseFile.copySync(p.join(config.outputRedscriptDir.path, 'LICENSE'));
+    config.copyLicenseSync(ScriptLanguage.redscript);
   }
   return BundleRedscriptInfo(
     modules: modules,
@@ -84,14 +82,18 @@ BundleRedscriptInfo _bundleRedscript(RedConfig config, BundleMode mode) {
 }
 
 BundleCETInfo _bundleCET(RedConfig config, BundleMode mode) {
-  final outputDir = config.outputCETDir;
-
-  if (outputDir.existsSync()) {
-    deleteCETDirectorySync(outputDir);
+  if (!config.hasCET()) {
+    return BundleCETInfo();
   }
-  outputDir.createSync(recursive: true);
-  final srcDir = config.cetSrcDir;
-  final scripts = copyDirectorySync(srcDir, outputDir);
+  final stageDir = config.getStageDir(ScriptLanguage.cet);
+
+  if (stageDir.existsSync()) {
+    deleteCETDirectorySync(stageDir);
+  }
+  stageDir.createSync(recursive: true);
+  final cetConfig = config.scripts.cet!;
+  final srcDir = cetConfig.srcDir;
+  final scripts = copyDirectorySync(srcDir, stageDir);
   int size = scripts.map((file) => file.statSync().size).reduce((previous, current) => previous + current);
 
   return BundleCETInfo(
@@ -104,14 +106,13 @@ void bundlePlugin(RedConfig config, BundleMode mode) {
   if (config.plugin == null) {
     return;
   }
-  String pluginPath = (mode == BundleMode.debug) ? config.plugin!.debug : config.plugin!.release;
-  File srcPluginFile = File(p.join(pluginPath, '${config.name}.dll'));
-  Directory dstPluginDir = Directory(p.join(config.dist, 'red4ext', 'plugins', config.name));
+  File srcPlugin = config.getPluginFile(mode);
+  Directory dstPlugin = config.getStageDir(ScriptLanguage.red4ext);
 
-  dstPluginDir.createSync(recursive: true);
-  File dstPluginFile = File(p.join(dstPluginDir.path, '${config.name}.dll'));
+  dstPlugin.createSync(recursive: true);
+  File dstPluginFile = File(p.join(dstPlugin.path, '${config.name}.dll'));
 
-  srcPluginFile.copySync(dstPluginFile.path);
+  srcPlugin.copySync(dstPluginFile.path);
 }
 
 // Redscript
@@ -158,16 +159,16 @@ List<ScriptModule> getModules(List<ScriptFile> scripts) {
 }
 
 int bundleModules(List<ScriptModule> modules, RedConfig config) {
-  final outputDir = config.outputRedscriptDir;
+  final stageDir = config.getStageDir(ScriptLanguage.redscript);
 
-  if (outputDir.existsSync()) {
-    outputDir.deleteSync(recursive: true);
+  if (stageDir.existsSync()) {
+    stageDir.deleteSync(recursive: true);
   }
-  outputDir.createSync(recursive: true);
+  stageDir.createSync(recursive: true);
   int size = 0;
 
   for (final module in modules) {
-    size += module.write(config, outputDir.path);
+    size += module.write(config, stageDir.path);
   }
   return size;
 }
