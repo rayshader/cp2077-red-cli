@@ -4,13 +4,13 @@ version: 0.2.2
 repository: https://github.com/rayshader/cp2077-red-cli
 
 environment:
-  sdk: ^3.2.5
+  sdk: ^3.5.3
 
 dependencies:
   archive: ^3.6.1
-  args: ^2.4.2
+  args: ^2.5.0
   chalkdart: ^2.2.1
 
 dev_dependencies:
   lints: ^4.0.0
-  test: ^1.24.0
+  test: ^1.25.8
