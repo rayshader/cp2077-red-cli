@@ -16,9 +16,9 @@ public class LLMServiceTest {
     let size = ArraySize(this.m_tokens);
 
     if size != 0 {
-      LogChannel(n"ERROR", "Load failed");
-      LogChannel(n"ERROR", s"Actual: \(size)");
-      LogChannel(n"ERROR", "Expected: 0");
+      FTLogError(s"Load failed");
+      FTLogError(s"Actual: \(size)");
+      FTLogError("Expected: 0");
     }
   }
 

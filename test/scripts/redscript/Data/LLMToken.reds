@@ -13,9 +13,13 @@ public struct LLMToken {
   public let offset: Uint32;
 
   @if(ModuleExists("RedData.Json"))
-  public static func GetJson() -> ref<JsonObject>;
+  public static func GetJson() -> ref<JsonObject> {
+    return null;
+  }
 
   @if(!ModuleExists("Codeware"))
-  public static func GetPersistent() -> ref<IScriptable>;
+  public static func GetPersistent() -> ref<IScriptable> {
+    return null;
+  }
 
 }

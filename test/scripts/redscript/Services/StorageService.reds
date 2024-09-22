@@ -18,7 +18,7 @@ public class StorageService {
     let file = this.m_storage.GetFile("config.json");
     let json = file.ReadAsJson();
 
-    LogChannel(n"DEBUG", s"Json: \(json.ToString("  ")");
+    FTLog(s"Json: \(json.ToString("  "))");
   }
 
 }

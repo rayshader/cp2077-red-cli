@@ -9,8 +9,11 @@ environment:
 dependencies:
   archive: ^3.6.1
   args: ^2.5.0
+  async: ^2.11.0
   chalkdart: ^2.2.1
   path: ^1.9.0
+  rxdart: ^0.28.0
+  toml: ^0.16.0
 
 dev_dependencies:
   lints: ^4.0.0

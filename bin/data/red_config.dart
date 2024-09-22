@@ -3,8 +3,11 @@ import 'dart:io';
 
 import 'package:chalkdart/chalkstrings.dart';
 import 'package:path/path.dart' as p;
+import 'package:toml/toml.dart';
 
+import '../data/toml_config.dart';
 import '../extensions/chalk_ext.dart';
+import '../extensions/path_ext.dart';
 import '../logger.dart';
 import '../tasks/bundle_task.dart';
 import 'script_language.dart';
@@ -34,6 +37,14 @@ class RedConfig {
 
   Directory get stageDir => Directory(stage);
 
+  Directory get rhtDir => Directory(p.join(game, 'red4ext', 'plugins', 'RedHotTools'));
+
+  File get rlsFile => File(p.join(p.current, '.redscript-ide'));
+
+  /// File created by Redscript Language Server when the workspace
+  /// successfully type checks.
+  File get tcFile => File(p.join(p.current, '.reds-ready'));
+
   File get archiveFile => File('$name-$version.zip');
 
   bool hasScripts() {
@@ -50,6 +61,12 @@ class RedConfig {
 
   bool hasRED4ext(BundleMode mode) {
     return ((mode == BundleMode.debug) ? plugin?.debugDir.existsSync() : plugin?.releaseDir.existsSync()) ?? false;
+  }
+
+  bool hasRHT() {
+    final pluginFile = File(p.join(rhtDir.path, 'RedHotTools.dll'));
+
+    return pluginFile.existsSync();
   }
 
   Directory getStageDir(ScriptLanguage language) {
@@ -89,6 +106,34 @@ class RedConfig {
     final pluginPath = (mode == BundleMode.debug) ? plugin!.debug : plugin!.release;
 
     return File(p.join(pluginPath, '$name.dll'));
+  }
+
+  /// Get Redscript Language Server configuration file.
+  ///
+  /// See https://github.com/jac3km4/redscript-ide?tab=readme-ov-file#configuration
+  File? getRLSConfigFile() {
+    return Directory.current.findFile(".redscript-ide", recursive: true);
+  }
+
+  /// Get Redscript Language Service successful typechecks file.
+  File? getRLSTrigger() {
+    final file = getRLSConfigFile();
+
+    if (file == null) {
+      return null;
+    }
+    final document = TomlDocument.parse(file.readAsStringSync());
+    final toml = TomlConfig.fromDocument(document);
+
+    if (toml.hasErrors()) {
+      return null;
+    }
+    return File(toml.path);
+  }
+
+  /// Get RedHotTools file to trigger hot reload.
+  File getRHTTrigger() {
+    return File(p.join(rhtDir.path, '.hot-scripts'));
   }
 
   void copyLicenseSync(ScriptLanguage language) {
@@ -189,6 +234,10 @@ class RedConfigPlugin {
     this.debug = '',
     this.release = '',
   });
+
+  Directory getDir(BundleMode mode) {
+    return (mode == BundleMode.debug) ? debugDir : releaseDir;
+  }
 
   factory RedConfigPlugin.fromJson(Map<String, dynamic> json) {
     return RedConfigPlugin(

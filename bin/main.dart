@@ -6,6 +6,7 @@ import 'package:chalkdart/chalkstrings.dart';
 import 'commands/bundle_command.dart';
 import 'commands/install_command.dart';
 import 'commands/pack_command.dart';
+import 'commands/watch_command.dart';
 import 'data/red_config.dart';
 
 class RedRunner extends CommandRunner {
@@ -31,6 +32,7 @@ void main(List<String> args) async {
   }
   runner.addCommand(BundleCommand(config: config));
   runner.addCommand(InstallCommand(config: config));
+  runner.addCommand(WatchCommand(config: config));
   runner.addCommand(PackCommand(config: config));
   runner.run(args);
 }

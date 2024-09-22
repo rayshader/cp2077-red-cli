@@ -7,7 +7,7 @@ public class Awesome extends ScriptableSystem {
 
   private cb func OnAttach() {
     this.m_llmService = null;
-    LogChannel(n"Info", "<awesome (attach) />");
+    FTLog("<awesome (attach) />");
   }
 
 }
