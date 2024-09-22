@@ -10,7 +10,8 @@ import 'data/red_config.dart';
 
 class RedRunner extends CommandRunner {
   @override
-  final String? usageFooter = '\nGitHub: https://github.com/rayshader/cp2077-red-cli';
+  final String? usageFooter = '\nGitHub: https://github.com/rayshader/cp2077-red-cli'
+      '\nDiscord: https://discord.com/channels/717692382849663036/1254464502968356965';
 
   RedRunner()
       : super(
