@@ -15,7 +15,8 @@ Global options:
 Available commands:
 ```
   bundle    Bundle scripts.
-  install   Install scripts in your game's directory.
+  install   Install scripts in game's directory.
+  watch     Watch scripts to hot reload them automatically in game's directory.
   pack      Pack scripts in an archive for release (include bundle step).
 ```
 
@@ -43,10 +44,11 @@ root directory of your project. The content should look like this:
   "version": "<semver>",
   "license": true,
   "game": "<path-to-game>",
-  // "dist": "<path-of-bundle>",             Deprecated, should be replaced by "stage"
+  // "dist": "<path-of-bundle>",          // Deprecated, should be replaced by "stage"
   "stage": "<path-of-bundle>",
   "scripts": {
     "redscript": {                        // Define only if you use redscript
+      "debounceTime": 3000,
       "src": "<path-to-scripts>",
       "output": "<path-to-redscript>"
     },
@@ -71,7 +73,10 @@ root directory of your project. The content should look like this:
 |              dist |    no    | `"stage\"`                                    | **Deprecated** You should use **stage** instead.                                                                                                                                                                   |
 |             stage |    no    | `"stage\"`                                    | Path to output bundle of your scripts. It is relative to the root directory of your project. This is temporary directory to allow red-cli to prepare and bundle files.                                             |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
+|         watchTime |    no    | 0                                             | Total amount of time recorded when using [watch](#watch) command. You should leave this value as-is.                                                                                                               |
+|            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
 | scripts.redscript |    no    |                                               | **Required when `scripts.cet` is not defined.**                                                                                                                                                                    |
+|      debounceTime |    no    | 3000                                          | Amount of time to debounce between new type checks and triggering a hot reload (in milliseconds). Minimum is 1000ms. See [watch](#watch) command.                                                                  |
 |               src |   yes    |                                               | Relative path of your scripts (.reds).                                                                                                                                                                             |
 |            output |    no    | `"r6\scripts\"`                               | Relative path of Redscript to install your bundle in game's directory. `name` will be appended for you (e.g. `"r6\scripts\<name>"`). You can omit or leave empty to use the default path.                          |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
@@ -174,7 +179,47 @@ debug compilation errors.
 > If option `plugin` is enabled, it will silently fail to install the DLL while the game is running. All scripts will be 
 > installed anyway.
 
+### Watch
+
+> [!NOTE]
+> This feature is redscript only for now.
+
+This command will automatically:
+1. Detect changes in scripts (.reds)
+2. Install changes in game's directory
+3. Test type checks are successful (using [Redscript Language Server])
+4. Trigger a hot reload (using [Red Hot Tools])
+
+You can now switch back to the game, scripts are already reloaded.
+
+This process will run continuously until you stop it using `CTRL + C`. This feature is similar to what is available in 
+popular frameworks like Angular, React, Vue, Flutter, and others.
+
+In order to prevent spamming the game engine to hot reload scripts, a debounce time setting is used. It will wait for 
+`debounceTime` (in milliseconds) until no new type checks are emitted by [Redscript Language Server], to finally trigger
+a hot reload. This setting can be configured in `red.config.json` to your convenience.
+If the game engine is already hot reloading, it will not trigger again, and wait until the next changes.
+
+> [!TIP]
+> This command will record the watch time and increment it in `red.config.json`. It keeps track of the time you spent 
+> working on your mod.
+
+#### Advanced configuration
+
+In order to detect type checks successfully, a `.redscript-ide` must be present in the folder / workspace of your 
+project. This is used by [Redscript Language Server]. By default, `red-cli` will prompt you to create the file if it is
+not present. It will be configured such as RLS emits the file `.reds-ready` when type checks successfully (after saving
+a file with VS Code). If you wish, or if you already generated this file in your project, you'll need to define the
+following TOML key, so `red-cli` knows which file to watch for changes when type checks successfully:
+```toml
+[[hooks.successful_check]]
+create_file = "{workspace_dir}\\.reds-ready"
+```
+`{workspace_dir}` will be interpreted as the current working directory where `red-cli` is executed. You can use an 
+absolute path instead.
+
 ### Pack
+
 ```shell
 red-cli pack
 ```
@@ -217,3 +262,5 @@ If you have questions or feedback, don't hesitate to ask me on [Discord].
 [test/]: https://github.com/rayshader/cp2077-red-cli/tree/master/test
 [issue]: https://github.com/rayshader/cp2077-red-cli/issues
 [Discord]: https://discord.com/channels/717692382849663036/1254464502968356965
+[Redscript Language Server]: https://github.com/jac3km4/redscript-ide
+[Red Hot Tools]: https://github.com/psiberx/cp2077-red-hot-tools/

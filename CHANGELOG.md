@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- improved formatting of time.
+
+### Added
+- `watch` command to detect changes in scripts (.reds), install them in game's 
+  directory when type checks successfully, and trigger hot reload with
+  RedHotTools.
+- `debounceTime` setting to configure the amount of time to wait between no new
+  type checks and triggering a hot reload (minimum of 1000ms, default is 4000ms).
+- `watchTime` setting to keep track of the total amount of time elapsed when
+  using the command `watch`.
 
 ------------------------
 

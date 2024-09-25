@@ -4,8 +4,10 @@ import 'package:args/command_runner.dart';
 import 'package:chalkdart/chalkstrings.dart';
 
 import '../data/red_config.dart';
+import '../format.dart';
 import '../logger.dart';
 import '../tasks/bundle_task.dart';
+import '../tasks/install_task.dart';
 import '../tasks/watch_task.dart';
 
 class WatchCommand extends Command {
@@ -29,15 +31,30 @@ class WatchCommand extends Command {
     if (!watchSetup(config)) {
       exit(2);
     }
+    Logger.clearScreen();
     BundleMode mode = BundleMode.debug;
-    //DateTime start = DateTime.now();
 
+    install(config, mode, false, false);
+    DateTime start = DateTime.now();
+
+    ProcessSignal.sigint.watch().listen((signal) => _terminate(start));
     Logger.log('Watching in ${mode.name.cyan} mode (${"CTRL + C".bold} to stop):');
-    await watch(config, mode);
-    /*
+    try {
+      Logger.hideCursor();
+      await watch(config, mode);
+    } catch (_) {
+      _terminate(start, 1);
+    }
+  }
+
+  void _terminate(DateTime start, [int exitCode = 0]) {
     int elapsedTime = DateTime.now().difference(start).inMilliseconds;
 
-    Logger.done('Installation of ${config.name.bold} done in ${formatTime(elapsedTime).bold}');
-    */
+    config.watchTime += elapsedTime;
+    config.save();
+    Logger.clearScreen();
+    Logger.showCursor();
+    Logger.done('Session watch time ${formatTime(elapsedTime).bold} (total ${formatTime(config.watchTime).bold})');
+    exit(exitCode);
   }
 }

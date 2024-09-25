@@ -7,7 +7,7 @@ import 'package:toml/toml.dart';
 
 import '../data/toml_config.dart';
 import '../extensions/chalk_ext.dart';
-import '../extensions/path_ext.dart';
+import '../extensions/filesystem_ext.dart';
 import '../logger.dart';
 import '../tasks/bundle_task.dart';
 import 'script_language.dart';
@@ -18,6 +18,7 @@ class RedConfig {
   bool license;
   String game;
   String stage;
+  int watchTime;
   RedConfigScripts scripts;
   RedConfigPlugin? plugin;
 
@@ -27,6 +28,7 @@ class RedConfig {
     this.version = '',
     this.game = '',
     this.stage = 'stage\\',
+    this.watchTime = 0,
     this.scripts = const RedConfigScripts(),
     this.plugin,
   });
@@ -39,11 +41,8 @@ class RedConfig {
 
   Directory get rhtDir => Directory(p.join(game, 'red4ext', 'plugins', 'RedHotTools'));
 
-  File get rlsFile => File(p.join(p.current, '.redscript-ide'));
-
-  /// File created by Redscript Language Server when the workspace
-  /// successfully type checks.
-  File get tcFile => File(p.join(p.current, '.reds-ready'));
+  /// Default settings file to generate for Redscript Language Server.
+  File get defaultRLSFile => File(p.join(p.current, '.redscript-ide'));
 
   File get archiveFile => File('$name-$version.zip');
 
@@ -115,7 +114,7 @@ class RedConfig {
     return Directory.current.findFile(".redscript-ide", recursive: true);
   }
 
-  /// Get Redscript Language Service successful typechecks file.
+  /// Get Redscript Language Service file when type check is successful.
   File? getRLSTrigger() {
     final file = getRLSConfigFile();
 
@@ -140,6 +139,14 @@ class RedConfig {
     licenseFile.copySync(p.join(getStageDir(language).path, 'LICENSE'));
   }
 
+  void save() {
+    final file = File(p.join(Directory.current.path, 'red.config.json'));
+    final encoder = JsonEncoder.withIndent('  ');
+    final json = encoder.convert(this);
+
+    file.writeAsStringSync(json);
+  }
+
   factory RedConfig.fromJson(Map<String, dynamic> json) {
     // Deprecated, still present to support versions below 0.3.0
     if (json['dist'] != null) {
@@ -151,9 +158,30 @@ class RedConfig {
       license: json['license'] ?? false,
       game: json['game'] ?? '',
       stage: json['stage'] ?? 'stage\\',
+      watchTime: json['watchTime'] ?? 0,
       scripts: RedConfigScripts.fromJson(json['scripts']),
       plugin: json['plugin'] != null ? RedConfigPlugin.fromJson(json['plugin']) : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+
+    json['name'] = name;
+    json['version'] = version;
+    json['license'] = license;
+    if (game.isNotEmpty) {
+      json['game'] = game;
+    }
+    if (stage.isNotEmpty) {
+      json['stage'] = stage;
+    }
+    json['watchTime'] = watchTime;
+    json['scripts'] = scripts.toJson();
+    if (plugin != null) {
+      json['plugin'] = plugin!.toJson();
+    }
+    return json;
   }
 }
 
@@ -172,6 +200,18 @@ class RedConfigScripts {
       cet: json['cet'] != null ? RedConfigCET.fromJson(json['cet']) : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+
+    if (redscript != null) {
+      json['redscript'] = redscript!.toJson();
+    }
+    if (cet != null) {
+      json['cet'] = cet!.toJson();
+    }
+    return json;
+  }
 }
 
 abstract class RedConfigScriptLanguage {
@@ -188,21 +228,56 @@ abstract class RedConfigScriptLanguage {
     required this.src,
     required this.output,
   });
+
+  bool filterFile(String path);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'src': src,
+    };
+  }
 }
 
 class RedConfigRedscript extends RedConfigScriptLanguage {
   static const String defaultOutput = 'r6\\scripts\\';
+  static const Duration defaultDebounceTime = Duration(seconds: 3);
+
+  final Duration debounceTime;
 
   const RedConfigRedscript({
     super.src = '',
     super.output = RedConfigRedscript.defaultOutput,
+    this.debounceTime = RedConfigRedscript.defaultDebounceTime,
   });
 
+  @override
+  bool filterFile(String path) => path.endsWith('.reds');
+
   factory RedConfigRedscript.fromJson(Map<String, dynamic> json) {
+    final debounceTimeValue = json['debounceTime'] ?? RedConfigRedscript.defaultDebounceTime.inMilliseconds;
+    Duration debounceTime = Duration(milliseconds: debounceTimeValue);
+
+    if (debounceTime.inMilliseconds < 1000) {
+      debounceTime = RedConfigRedscript.defaultDebounceTime;
+    }
     return RedConfigRedscript(
       src: json['src'] ?? '',
       output: json['output'] ?? RedConfigRedscript.defaultOutput,
+      debounceTime: debounceTime,
     );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+
+    if (output != RedConfigRedscript.defaultOutput) {
+      json['output'] = output;
+    }
+    if (debounceTime.inMilliseconds != RedConfigRedscript.defaultDebounceTime.inMilliseconds) {
+      json['debounceTime'] = debounceTime.inMilliseconds;
+    }
+    return json;
   }
 }
 
@@ -214,11 +289,24 @@ class RedConfigCET extends RedConfigScriptLanguage {
     super.output = RedConfigCET.defaultOutput,
   });
 
+  @override
+  bool filterFile(String path) => path.endsWith('.lua');
+
   factory RedConfigCET.fromJson(Map<String, dynamic> json) {
     return RedConfigCET(
       src: json['src'] ?? '',
       output: json['output'] ?? RedConfigCET.defaultOutput,
     );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+
+    if (output != RedConfigCET.defaultOutput) {
+      json['output'] = output;
+    }
+    return json;
   }
 }
 
@@ -244,6 +332,13 @@ class RedConfigPlugin {
       debug: json['debug'] ?? '',
       release: json['release'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'debug': debug,
+      'release': release,
+    };
   }
 }
 

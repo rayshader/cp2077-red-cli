@@ -2,7 +2,11 @@ import 'dart:io';
 
 import 'package:chalkdart/chalkstrings.dart';
 
+import 'extensions/ncurses_ext.dart';
+
 class Logger {
+  /// Logger ///
+
   static log(String message, {bool withoutNewline = false}) {
     _prefix('', message, withoutNewline);
   }
@@ -26,4 +30,26 @@ class Logger {
       print('$prefix$message');
     }
   }
+
+  /// Cursor ///
+
+  static saveCursor() => stdout.write(''.saveCursorPosition);
+
+  static restoreCursor([int linesDown = 0]) {
+    if (linesDown <= 0) {
+      stdout.write(''.restoreCursorPosition);
+    } else {
+      stdout.write(''.restoreCursorPosition.moveDown(linesDown));
+    }
+  }
+
+  static hideCursor() => stdout.write(''.hideCursor);
+
+  static showCursor() => stdout.write(''.showCursor);
+
+  /// Screen ///
+
+  static clearScreen() => stdout.writeln(''.moveHome.clearScreen);
+
+  static clearLine() => stdout.write(''.clearLine.moveToStartOfLine);
 }

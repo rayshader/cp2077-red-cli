@@ -9,22 +9,21 @@ import '../data/script_language.dart';
 import '../data/toml_config.dart';
 import '../extensions/chalk_ext.dart';
 import '../extensions/filesystem_ext.dart';
-import '../extensions/list_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
 
-class FileSystemOperation {
-  final FileSystemEntity file;
+class FileSystemAction {
   final int event;
+  final FileSystemEntity src;
+  final FileSystemEntity? dst;
 
-  const FileSystemOperation({
-    required this.file,
-    required this.event,
-  });
+  const FileSystemAction({required this.src, required this.event, this.dst});
 
-  String get path => file.path;
+  String get srcPath => src.path;
 
-  String get type => file is Directory ? 'directory' : 'file';
+  String? get dstPath => dst?.path;
+
+  String get type => src is Directory ? 'directory' : 'file';
 }
 
 bool watchSetup(RedConfig config) {
@@ -63,81 +62,202 @@ bool watchSetup(RedConfig config) {
 }
 
 Future<void> watch(RedConfig config, BundleMode mode) async {
-  List<Stream<FileSystemEvent>> sources = [];
+  Stream<Object> redscript$ = Stream.empty();
+  Stream<Object> cet$ = Stream.empty();
+  final rlsTrigger = config.getRLSTrigger();
+  final rhtTrigger = config.getRHTTrigger();
 
   if (config.hasRedscript()) {
-    sources.add(config.scripts.redscript!.srcDir.watch(recursive: true).where(
-        (event) => (event.isDirectoryLike && event.type != FileSystemEvent.modify) || event.path.endsWith(".reds")));
+    final rls$ = rlsTrigger!.parent
+        .watch(events: FileSystemEvent.create | FileSystemEvent.modify)
+        .where((event) => event.path == rlsTrigger.path)
+        .doOnData((_) {
+      Logger.restoreCursor();
+      Logger.clearLine();
+      Logger.info('Redscript: ${'good'.bold.green}');
+    });
+    final rht$ = rhtTrigger.parent
+        .watch(events: FileSystemEvent.delete)
+        .startWith(FileSystemDeleteEvent(rhtTrigger.path, false))
+        .where((event) => event.path == rhtTrigger.path)
+        .doOnData((_) {
+      Logger.restoreCursor(1);
+      Logger.clearLine();
+      Logger.info('Hot reload: ${'ready'.bold.green}');
+    });
+
+    redscript$ = _watchRedscript(config)
+        .doOnData((_) {
+          Logger.restoreCursor();
+          Logger.clearLine();
+          Logger.info('Redscript: ${'wait'.bold.yellow}');
+        })
+        .buffer(rls$)
+        .debounceTime(config.scripts.redscript!.debounceTime)
+        .withLatestFrom(rht$, (left, right) => {})
+        .doOnData((_) {
+          if (rhtTrigger.existsSync()) {
+            Logger.restoreCursor(1);
+            Logger.clearLine();
+            Logger.info('Hot reload: ${'skip'.bold.yellow}');
+            return;
+          }
+          rhtTrigger.createSync();
+          Logger.restoreCursor(1);
+          Logger.clearLine();
+          Logger.info('Hot reload: ${'trigger'.bold.cyan}');
+        });
   }
   if (config.hasCET()) {
-    sources.add(config.scripts.cet!.srcDir.watch(recursive: true).where(
-        (event) => (event.isDirectoryLike && event.type != FileSystemEvent.modify) || event.path.endsWith(".lua")));
+    //cet$ = _watchCET(config);
+    Logger.info('Feature is not available with CET.');
   }
-  final rlsTrigger = config.getRLSTrigger()!;
-  final rlsEvent = rlsTrigger.parent
-      .watch(events: FileSystemEvent.create | FileSystemEvent.modify)
-      .where((event) => event.path == rlsTrigger.path);
-  final fsEvent = Rx.merge(sources);
+  Logger.saveCursor();
+  Logger.info('Redscript: ${'wait'.bold}');
+  Logger.info('Hot reload: ${'wait'.bold}');
+  final fs$ = Rx.merge([redscript$, cet$]);
 
-  await fsEvent
-      .map((event) => FileSystemOperation(file: event.entity, event: event.type))
-      .buffer(rlsEvent)
-      .forEach((events) {
-    final redscriptSrc = config.scripts.redscript!.src;
-    final redscriptInstallDir = config.getInstallDir(ScriptLanguage.redscript);
-    final cetSrc = config.scripts.cet!.src;
-    final cetInstallDir = config.getInstallDir(ScriptLanguage.cet);
-
-    events.toList().distinct((op) => Object.hash(op.type, op.path)).forEach((op) {
-      String path = op.path;
-
-      if (path.startsWith(redscriptSrc)) {
-        path = p.relative(path, from: redscriptSrc);
-        path = p.join(redscriptInstallDir.path, path);
-      } else if (path.startsWith(cetSrc)) {
-        path = p.relative(path, from: cetSrc);
-        path = p.join(cetInstallDir.path, path);
-      }
-      String action = getOperationTag(op.event);
-
-      Logger.log('[$action][${op.type}][${op.path.path}][${path.path}]');
-      // TODO:
-      // - apply changes (copy / remove)
-      /*
-      [create][directory]["scripts\redscript\Add"]["game\r6\scripts\Awesome\Add"]
-      [create][file]["scripts\redscript\Add\add.reds"]["game\r6\scripts\Awesome\Add\add.reds"]
-      [update][file]["scripts\redscript\Add\add.reds"]["game\r6\scripts\Awesome\Add\add.reds"]
-      [delete][directory]["scripts\redscript\Add"]["game\r6\scripts\Awesome\Add"]
-      [create][directory]["scripts\redscript\Services\Add"]["game\r6\scripts\Awesome\Services\Add"]
-      [update][file]["scripts\redscript\Services\Add\add.reds"]["game\r6\scripts\Awesome\Services\Add\add.reds"]
-      [create][file]["scripts\redscript\Services\Add\delete.reds"]["game\r6\scripts\Awesome\Services\Add\delete.reds"]
-      [delete][file]["scripts\redscript\Services\Add\delete.reds"]["game\r6\scripts\Awesome\Services\Add\delete.reds"]
-      [update][file]["scripts\redscript\Services\Add\add.reds"]["game\r6\scripts\Awesome\Services\Add\add.reds"]
-      */
-    });
-    final rhtTrigger = config.getRHTTrigger();
-
-    if (rhtTrigger.existsSync()) {
-      rhtTrigger.deleteSync();
-    }
-    rhtTrigger.createSync();
-    // - trigger hot reload (RHT)
-  });
-  if (rlsTrigger.existsSync()) {
+  await fs$.drain();
+  if (rlsTrigger != null && rlsTrigger.existsSync()) {
     rlsTrigger.deleteSync();
   }
 }
 
-String getOperationTag(int event) {
+bool _filterDirectory(FileSystemEvent event) => (event.isDirectoryLike && event.type != FileSystemEvent.modify);
+
+Stream<FileSystemAction> _watchLanguage(RedConfig config, RedConfigScriptLanguage languageConfig) {
+  return _watchActions(
+    config,
+    languageConfig.srcDir
+        .watch(recursive: true)
+        .where((event) => _filterDirectory(event) || languageConfig.filterFile(event.path)),
+  );
+}
+
+Stream<FileSystemAction> _watchRedscript(RedConfig config) => _watchLanguage(config, config.scripts.redscript!);
+
+Stream<FileSystemAction> _watchCET(RedConfig config) => _watchLanguage(config, config.scripts.cet!);
+
+Stream<FileSystemAction> _watchActions(RedConfig config, Stream<FileSystemEvent> subject) {
+  return subject
+      .map((event) => FileSystemAction(src: event.entity, event: event.type, dst: event.entityDestination))
+      .doOnData((action) => _applyAction(config, action));
+}
+
+void _applyAction(RedConfig config, FileSystemAction action) {
+  String tag = _getActionTag(action.event);
+  String type = action.src is Directory ? 'DIR ' : 'FILE';
+
+  Logger.restoreCursor(3);
+  Logger.clearLine();
+  Logger.log('$tag ${type.bold} ', withoutNewline: true);
+  if (action.src is Directory) {
+    _applyDirectory(config, action);
+  } else if (action.src is File) {
+    _applyFile(config, action);
+  }
+}
+
+void _logDiff(String src, String dst) {
+  Logger.log(src.green);
+  Logger.clearLine();
+  Logger.log('       ${dst.green}');
+}
+
+void _applyDirectory(RedConfig config, FileSystemAction action) {
+  try {
+    switch (action.event) {
+      case FileSystemEvent.create:
+        final src = Directory(action.srcPath);
+        final dst = Directory(_toGamePath(config, action.srcPath));
+
+        dst.createSync();
+        src.copySync(dst);
+
+        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        break;
+      case FileSystemEvent.move:
+        final src = Directory(_toGamePath(config, action.srcPath));
+        final dst = Directory(_toGamePath(config, action.dstPath!));
+
+        src.renameSync(dst.path);
+
+        _logDiff(_relativeGamePath(config, src.path), _relativeGamePath(config, dst.path));
+        break;
+      case FileSystemEvent.delete:
+        final dst = Directory(_toGamePath(config, action.srcPath));
+
+        dst.deleteSync(recursive: true);
+
+        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        break;
+    }
+  } catch (error) {
+    stdout.writeln('');
+    Logger.error('Unexpected failure:');
+    Logger.error(error.toString());
+  }
+}
+
+void _applyFile(RedConfig config, FileSystemAction action) {
+  try {
+    switch (action.event) {
+      case FileSystemEvent.create:
+      case FileSystemEvent.modify:
+        final src = File(action.srcPath);
+        final dst = File(_toGamePath(config, action.srcPath));
+
+        dst.writeAsBytesSync(src.readAsBytesSync(), flush: true);
+
+        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        break;
+      case FileSystemEvent.move:
+        final src = File(_toGamePath(config, action.srcPath));
+        final dstPath = _toGamePath(config, action.dstPath!);
+
+        src.copySync(dstPath);
+        src.deleteSync();
+
+        _logDiff(_relativeGamePath(config, src.path), _relativeGamePath(config, dstPath));
+        break;
+      case FileSystemEvent.delete:
+        final dst = File(_toGamePath(config, action.srcPath));
+
+        dst.deleteSync();
+
+        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        break;
+    }
+  } catch (error) {
+    stdout.writeln('');
+    Logger.error('Unexpected failure:');
+    Logger.error(error.toString());
+  }
+}
+
+String _toGamePath(RedConfig config, String path) {
+  final redscriptSrc = config.scripts.redscript!.src;
+  final redscriptInstallDir = config.getInstallDir(ScriptLanguage.redscript);
+
+  if (path.startsWith(redscriptSrc)) {
+    path = p.relative(path, from: redscriptSrc);
+    path = p.join(redscriptInstallDir.path, path);
+  }
+  return path;
+}
+
+String _relativeGamePath(RedConfig config, String path) => p.relative(path, from: config.game);
+
+String _getActionTag(int event) {
   switch (event) {
     case FileSystemEvent.create:
-      return 'create';
+      return '+'.bold.green;
     case FileSystemEvent.modify:
-      return 'update';
-    case FileSystemEvent.delete:
-      return 'delete';
+      return '~'.bold.cyan;
     case FileSystemEvent.move:
-      return 'move';
+      return '*'.bold.cyan;
+    case FileSystemEvent.delete:
+      return '-'.bold.red;
   }
-  return 'N/A';
+  return '?'.bold.yellow;
 }

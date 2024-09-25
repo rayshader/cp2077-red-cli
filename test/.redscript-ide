@@ -1,0 +1,2 @@
+[[hooks.successful_check]]
+create_file = "{workspace_dir}\\.reds-ready"
