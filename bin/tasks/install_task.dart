@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 import '../data/red_config.dart';
 import '../data/script_language.dart';
 import '../extensions/chalk_ext.dart';
-import '../extensions/path_ext.dart';
+import '../extensions/filesystem_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
 
@@ -72,8 +72,7 @@ void _installRedscript(RedConfig config, BundleMode mode, bool bundleOption, boo
   final srcDir = (bundleOption) ? config.stageDir : config.scripts.redscript!.srcDir;
   final dstDir = (bundleOption) ? config.gameDir : installDir;
 
-  copyDirectorySync(
-    srcDir,
+  srcDir.copySync(
     dstDir,
     filter: (File file) => filterRedscriptFile(file, mode),
   );
@@ -100,5 +99,5 @@ void _installCET(RedConfig config, BundleMode mode, bool bundleOption, bool clea
   final srcDir = (bundleOption) ? config.stageDir : config.scripts.cet!.srcDir;
   final dstDir = (bundleOption) ? config.gameDir : installDir;
 
-  copyDirectorySync(srcDir, dstDir);
+  srcDir.copySync(dstDir);
 }

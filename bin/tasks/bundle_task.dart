@@ -7,7 +7,7 @@ import '../data/red_config.dart';
 import '../data/script_file.dart';
 import '../data/script_language.dart';
 import '../data/script_module.dart';
-import '../extensions/path_ext.dart';
+import '../extensions/filesystem_ext.dart';
 import '../logger.dart';
 
 enum BundleMode {
@@ -93,7 +93,7 @@ BundleCETInfo _bundleCET(RedConfig config, BundleMode mode) {
   stageDir.createSync(recursive: true);
   final cetConfig = config.scripts.cet!;
   final srcDir = cetConfig.srcDir;
-  final scripts = copyDirectorySync(srcDir, stageDir);
+  final scripts = srcDir.copySync(stageDir);
   int size = scripts.map((file) => file.statSync().size).reduce((previous, current) => previous + current);
 
   return BundleCETInfo(
