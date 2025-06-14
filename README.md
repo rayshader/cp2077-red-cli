@@ -44,7 +44,6 @@ root directory of your project. The content should look like this:
   "version": "<semver>",
   "license": true,
   "game": "<path-to-game>",
-  // "dist": "<path-of-bundle>",          // Deprecated, should be replaced by "stage"
   "stage": "<path-of-bundle>",
   "scripts": {
     "redscript": {                        // Define only if you use redscript
@@ -71,7 +70,6 @@ root directory of your project. The content should look like this:
 |           version |    no    | `"0.1.0"`                                     | Version of your mod. It will be included in the bundle of your scripts.                                                                                                                                            |
 |           license |    no    | `false`                                       | `true` to add LICENSE file, from the root directory, when packing a release.                                                                                                                                       |
 |              game |    no    | *auto-detect path*                            | Absolute path to `Cyberpunk 2077` directory. You can omit or leave empty this field to auto-detect the path (Steam, GOG, Epic).                                                                                    |
-|              dist |    no    | `"stage\"`                                    | **Deprecated** You should use **stage** instead.                                                                                                                                                                   |
 |             stage |    no    | `"stage\"`                                    | Path to output bundle of your scripts. It is relative to the root directory of your project. This is temporary directory to allow red-cli to prepare and bundle files.                                             |
 |            &nbsp; |          |                                               |                                                                                                                                                                                                                    |
 |         watchTime |    no    | 0                                             | Total amount of time recorded when using [watch](#watch) command. You should leave this value as-is.                                                                                                               |

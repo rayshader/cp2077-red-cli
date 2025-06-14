@@ -150,10 +150,6 @@ class RedConfig {
   }
 
   factory RedConfig.fromJson(Map<String, dynamic> json) {
-    // Deprecated, still present to support versions below 0.3.0
-    if (json['dist'] != null) {
-      json['stage'] = json['dist'];
-    }
     return RedConfig(
       name: json['name'] ?? '',
       version: json['version'] ?? '',
