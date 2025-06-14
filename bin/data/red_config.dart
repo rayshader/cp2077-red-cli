@@ -103,6 +103,12 @@ class RedConfig {
     }
   }
 
+  Directory getStorageDir(bool bundleOption) {
+    return bundleOption
+        ? Directory(p.join(stage, 'r6', 'storages', name))
+        : Directory(p.join(game, 'r6', 'storages', name));
+  }
+
   File getPluginFile(BundleMode mode) {
     final pluginPath = (mode == BundleMode.debug) ? plugin!.debug : plugin!.release;
 
