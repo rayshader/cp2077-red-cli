@@ -14,6 +14,7 @@ void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOpt
     bundle(config, mode);
   }
   _installRedscript(config, mode, bundleOption, cleanOption);
+  _installRedscriptStorage(config, mode, bundleOption);
   _installCET(config, mode, bundleOption, cleanOption);
   if (bundleOption && cleanOption) {
     config.stageDir.deleteSync(recursive: true);
@@ -76,6 +77,28 @@ void _installRedscript(RedConfig config, BundleMode mode, bool bundleOption, boo
     dstDir,
     filter: (File file) => filterRedscriptFile(file, mode),
   );
+}
+
+void _installRedscriptStorage(RedConfig config, BundleMode mode, bool bundleOption) {
+  if (!config.hasRedscript()) {
+    return;
+  }
+  final srcDir = config.scripts.redscript!.storageDir;
+  if (srcDir == null) {
+    return;
+  }
+  if (!srcDir.existsSync()) {
+    Logger.error('Could not find storage directory in ${srcDir.path.path}.');
+    return;
+  }
+
+  final dstDir = config.storageDir;
+  if (dstDir.existsSync()) {
+    dstDir.deleteSync(recursive: true);
+  }
+  dstDir.createSync(recursive: true);
+
+  srcDir.copySync(dstDir);
 }
 
 void _installCET(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {

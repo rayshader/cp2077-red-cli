@@ -41,6 +41,8 @@ class RedConfig {
 
   Directory get rhtDir => Directory(p.join(game, 'red4ext', 'plugins', 'RedHotTools'));
 
+  Directory get storageDir => Directory(p.join(game, 'r6', 'storages', name));
+
   /// Default settings file to generate for Redscript Language Server.
   File get defaultRLSFile => File(p.join(p.current, '.redscript-ide'));
 
@@ -244,10 +246,16 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
 
   final Duration debounceTime;
 
+  /// Path of a RedFileSystem storage.
+  final String? storage;
+
+  Directory? get storageDir => storage == null ? null : Directory(storage!);
+
   const RedConfigRedscript({
     super.src = '',
     super.output = RedConfigRedscript.defaultOutput,
     this.debounceTime = RedConfigRedscript.defaultDebounceTime,
+    this.storage,
   });
 
   @override
@@ -264,6 +272,7 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
       src: json['src'] ?? '',
       output: json['output'] ?? RedConfigRedscript.defaultOutput,
       debounceTime: debounceTime,
+      storage: json['storage'],
     );
   }
 
@@ -276,6 +285,9 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
     }
     if (debounceTime.inMilliseconds != RedConfigRedscript.defaultDebounceTime.inMilliseconds) {
       json['debounceTime'] = debounceTime.inMilliseconds;
+    }
+    if (storage != null && storage!.isNotEmpty) {
+      json['storage'] = storage;
     }
     return json;
   }

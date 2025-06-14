@@ -6,7 +6,8 @@
   "stage": "stage\\",
   "scripts": {
     "redscript": {
-      "src": "scripts\\redscript\\"
+      "src": "scripts\\redscript\\",
+      "storage": "scripts\\storage\\"
     },
     "cet": {
       "src": "scripts\\cet\\"

@@ -50,7 +50,8 @@ root directory of your project. The content should look like this:
     "redscript": {                        // Define only if you use redscript
       "debounceTime": 3000,
       "src": "<path-to-scripts>",
-      "output": "<path-to-redscript>"
+      "output": "<path-to-redscript>",
+      "storage": "<path-to-storage>"      // Optional, when using RedFileSystem
     },
     "cet": {                              // Define only if you use CET
       "src": "<path-to-scripts>",
