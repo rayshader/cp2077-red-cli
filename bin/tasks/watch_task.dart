@@ -5,12 +5,13 @@ import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 
 import '../data/red_config.dart';
-import '../data/script_language.dart';
 import '../data/toml_config.dart';
 import '../extensions/chalk_ext.dart';
 import '../extensions/filesystem_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
+
+typedef GamePathCallback = String Function(RedConfig, String);
 
 class FileSystemAction {
   final int event;
@@ -63,6 +64,7 @@ bool watchSetup(RedConfig config) {
 
 Future<void> watch(RedConfig config, BundleMode mode) async {
   Stream<Object> redscript$ = Stream.empty();
+  Stream<Object> storage$ = Stream.empty();
   Stream<Object> cet$ = Stream.empty();
   final rlsTrigger = config.getRLSTrigger();
   final rhtTrigger = config.getRHTTrigger();
@@ -127,24 +129,40 @@ bool _filterDirectory(FileSystemEvent event) => (event.isDirectoryLike && event.
 
 Stream<FileSystemAction> _watchLanguage(RedConfig config, RedConfigScriptLanguage languageConfig) {
   return _watchActions(
-    config,
-    languageConfig.srcDir
-        .watch(recursive: true)
-        .where((event) => _filterDirectory(event) || languageConfig.filterFile(event.path)),
-  );
+      config,
+      languageConfig.srcDir
+          .watch(recursive: true)
+          .where((event) => _filterDirectory(event) || languageConfig.filterFile(event.path)),
+      toGamePath: languageConfig.toGamePath,
+      relativeGamePath: languageConfig.relativeGamePath);
 }
 
 Stream<FileSystemAction> _watchRedscript(RedConfig config) => _watchLanguage(config, config.scripts.redscript!);
 
 Stream<FileSystemAction> _watchCET(RedConfig config) => _watchLanguage(config, config.scripts.cet!);
 
-Stream<FileSystemAction> _watchActions(RedConfig config, Stream<FileSystemEvent> subject) {
+Stream<FileSystemAction> _watchActions(
+  RedConfig config,
+  Stream<FileSystemEvent> subject, {
+  required GamePathCallback toGamePath,
+  required GamePathCallback relativeGamePath,
+}) {
   return subject
       .map((event) => FileSystemAction(src: event.entity, event: event.type, dst: event.entityDestination))
-      .doOnData((action) => _applyAction(config, action));
+      .doOnData((action) => _applyAction(
+            config,
+            action,
+            toGamePath: toGamePath,
+            relativeGamePath: relativeGamePath,
+          ));
 }
 
-void _applyAction(RedConfig config, FileSystemAction action) {
+void _applyAction(
+  RedConfig config,
+  FileSystemAction action, {
+  required GamePathCallback toGamePath,
+  required GamePathCallback relativeGamePath,
+}) {
   String tag = _getActionTag(action.event);
   String type = action.src is Directory ? 'DIR ' : 'FILE';
 
@@ -152,9 +170,19 @@ void _applyAction(RedConfig config, FileSystemAction action) {
   Logger.clearLine();
   Logger.log('$tag ${type.bold} ', withoutNewline: true);
   if (action.src is Directory) {
-    _applyDirectory(config, action);
+    _applyDirectory(
+      config,
+      action,
+      toGamePath: toGamePath,
+      relativeGamePath: relativeGamePath,
+    );
   } else if (action.src is File) {
-    _applyFile(config, action);
+    _applyFile(
+      config,
+      action,
+      toGamePath: toGamePath,
+      relativeGamePath: relativeGamePath,
+    );
   }
 }
 
@@ -164,32 +192,37 @@ void _logDiff(String src, String dst) {
   Logger.log('       ${dst.green}');
 }
 
-void _applyDirectory(RedConfig config, FileSystemAction action) {
+void _applyDirectory(
+  RedConfig config,
+  FileSystemAction action, {
+  required GamePathCallback toGamePath,
+  required GamePathCallback relativeGamePath,
+}) {
   try {
     switch (action.event) {
       case FileSystemEvent.create:
         final src = Directory(action.srcPath);
-        final dst = Directory(_toGamePath(config, action.srcPath));
+        final dst = Directory(toGamePath(config, action.srcPath));
 
         dst.createSync();
         src.copySync(dst);
 
-        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        _logDiff(action.srcPath, relativeGamePath(config, dst.path));
         break;
       case FileSystemEvent.move:
-        final src = Directory(_toGamePath(config, action.srcPath));
-        final dst = Directory(_toGamePath(config, action.dstPath!));
+        final src = Directory(toGamePath(config, action.srcPath));
+        final dst = Directory(toGamePath(config, action.dstPath!));
 
         src.renameSync(dst.path);
 
-        _logDiff(_relativeGamePath(config, src.path), _relativeGamePath(config, dst.path));
+        _logDiff(relativeGamePath(config, src.path), relativeGamePath(config, dst.path));
         break;
       case FileSystemEvent.delete:
-        final dst = Directory(_toGamePath(config, action.srcPath));
+        final dst = Directory(toGamePath(config, action.srcPath));
 
         dst.deleteSync(recursive: true);
 
-        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        _logDiff(action.srcPath, relativeGamePath(config, dst.path));
         break;
     }
   } catch (error) {
@@ -199,33 +232,38 @@ void _applyDirectory(RedConfig config, FileSystemAction action) {
   }
 }
 
-void _applyFile(RedConfig config, FileSystemAction action) {
+void _applyFile(
+  RedConfig config,
+  FileSystemAction action, {
+  required GamePathCallback toGamePath,
+  required GamePathCallback relativeGamePath,
+}) {
   try {
     switch (action.event) {
       case FileSystemEvent.create:
       case FileSystemEvent.modify:
         final src = File(action.srcPath);
-        final dst = File(_toGamePath(config, action.srcPath));
+        final dst = File(toGamePath(config, action.srcPath));
 
         dst.writeAsBytesSync(src.readAsBytesSync(), flush: true);
 
-        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        _logDiff(action.srcPath, relativeGamePath(config, dst.path));
         break;
       case FileSystemEvent.move:
-        final src = File(_toGamePath(config, action.srcPath));
-        final dstPath = _toGamePath(config, action.dstPath!);
+        final src = File(toGamePath(config, action.srcPath));
+        final dstPath = toGamePath(config, action.dstPath!);
 
         src.copySync(dstPath);
         src.deleteSync();
 
-        _logDiff(_relativeGamePath(config, src.path), _relativeGamePath(config, dstPath));
+        _logDiff(relativeGamePath(config, src.path), relativeGamePath(config, dstPath));
         break;
       case FileSystemEvent.delete:
-        final dst = File(_toGamePath(config, action.srcPath));
+        final dst = File(toGamePath(config, action.srcPath));
 
         dst.deleteSync();
 
-        _logDiff(action.srcPath, _relativeGamePath(config, dst.path));
+        _logDiff(action.srcPath, relativeGamePath(config, dst.path));
         break;
     }
   } catch (error) {
@@ -234,19 +272,6 @@ void _applyFile(RedConfig config, FileSystemAction action) {
     Logger.error(error.toString());
   }
 }
-
-String _toGamePath(RedConfig config, String path) {
-  final redscriptSrc = config.scripts.redscript!.src;
-  final redscriptInstallDir = config.getInstallDir(ScriptLanguage.redscript);
-
-  if (path.startsWith(redscriptSrc)) {
-    path = p.relative(path, from: redscriptSrc);
-    path = p.join(redscriptInstallDir.path, path);
-  }
-  return path;
-}
-
-String _relativeGamePath(RedConfig config, String path) => p.relative(path, from: config.game);
 
 String _getActionTag(int event) {
   switch (event) {

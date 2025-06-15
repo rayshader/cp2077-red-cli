@@ -235,6 +235,10 @@ abstract class RedConfigScriptLanguage {
 
   bool filterFile(String path);
 
+  String toGamePath(RedConfig config, String path);
+
+  String relativeGamePath(RedConfig config, String path);
+
   Map<String, dynamic> toJson() {
     return {
       'src': src,
@@ -279,6 +283,20 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
   }
 
   @override
+  String toGamePath(RedConfig config, String path) {
+    final redscriptInstallDir = config.getInstallDir(ScriptLanguage.redscript);
+
+    if (path.startsWith(src)) {
+      path = p.relative(path, from: src);
+      path = p.join(redscriptInstallDir.path, path);
+    }
+    return path;
+  }
+
+  @override
+  String relativeGamePath(RedConfig config, String path) => p.relative(path, from: config.game);
+
+  @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
 
@@ -305,6 +323,12 @@ class RedConfigCET extends RedConfigScriptLanguage {
 
   @override
   bool filterFile(String path) => path.endsWith('.lua');
+
+  @override
+  String toGamePath(RedConfig config, String path) => throw UnimplementedError();
+
+  @override
+  String relativeGamePath(RedConfig config, String path) => throw UnimplementedError();
 
   factory RedConfigCET.fromJson(Map<String, dynamic> json) {
     return RedConfigCET(
