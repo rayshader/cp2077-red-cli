@@ -36,7 +36,7 @@ It should show usage information if it is installed correctly.
 
 ## Configure your project
 
-This tool use a Json file to configure and work with your environment. You must put the file `red.config.json` in the
+This tool uses a JSON file to configure and work with your environment. You must put the file `red.config.json` in the
 root directory of your project. The content should look like this:
 ```json5
 {
@@ -93,7 +93,7 @@ root directory of your project. The content should look like this:
 If you're using a custom game's path, you can configure an environment variable instead. This is convenient to avoid 
 pushing your local game's path in `red.config.json` when versioning your project.
 
-Define path in `REDCLI_GAME` environment variable, red-cli will use it instead. Reading game's path is done in this 
+Define a path in `REDCLI_GAME` environment variable, red-cli will use it instead. Reading game's path is done in this 
 order:
 - environment variable
 - `game` key in `red.config.json`
@@ -108,7 +108,7 @@ You can bundle your scripts like this:
 ```shell
 red-cli bundle
 ```
-It will merge scripts per module. It is useful to reduce the amount of files when releasing your project. This step can
+It will merge scripts per module. It is useful to reduce the number of files when releasing your project. This step can
 be used with the `install` command. It is always enabled with the `pack` command.
 
 Example with the following scripts:
