@@ -156,7 +156,7 @@ If you have scripts declared in the global scope (without using `module <name>` 
 // It will include distinct `import` statements too.
 ```
 
-You can find an example in [test/] of this repository. Download this folder, open a terminal in the folder and try some 
+You can find an example in [test/] of this repository. Download this folder, open a terminal in the folder, and try some 
 commands to see the output.
 
 ### Install
@@ -165,15 +165,16 @@ You can install your scripts in the game's directory with a simple command, from
 ```shell
 red-cli install
 ```
+- install redscript files in `<game>\r6\scripts\<name>` (when configured).
+- install RedFileSystem files in `<game>\r6\storages\<name>\` (when configured).
+- install CET files in `<game>\bin\x64\plugins\cyber_engine_tweaks\mods\<name>` (when configured).
+- install RED4ext library in `<game>\red4ext\plugins\<name>\<name>.dll` (when configured).
 
-It will install scripts in `<game>\r6\scripts\<name>` for you. If you have configured CET, it will install scripts in 
-`<game>\bin\x64\plugins\cyber_engine_tweaks\mods\<name>`. If you have configured RED4ext plugin, it will also install 
-the library in `<game>\red4ext\plugins\<name>\<name>.dll`. It will run in `debug` mode by default to include 
-test scripts.
+It will run in `debug` mode by default to include test scripts.
 
-You can use option `--bundle` to bundle your scripts before installing them. It will show you how it will look like when
-releasing your project with the `pack` command. You should not use this option when debugging, as it will be harder to 
-debug compilation errors.
+You can use option `--bundle` to bundle your scripts before installing them. It will show you what it will look like 
+when releasing your project with the `pack` command. You should not use this option when debugging, as it will be harder
+to debug compilation errors.
 
 > [!NOTE]
 > If option `plugin` is enabled, it will silently fail to install the DLL while the game is running. All scripts will be 
@@ -195,10 +196,10 @@ You can now switch back to the game, scripts are already reloaded.
 This process will run continuously until you stop it using `CTRL + C`. This feature is similar to what is available in 
 popular frameworks like Angular, React, Vue, Flutter, and others.
 
-In order to prevent spamming the game engine to hot reload scripts, a debounce time setting is used. It will wait for 
+To prevent spamming the game engine to hot reload scripts, a debounced time setting is used. It will wait for 
 `debounceTime` (in milliseconds) until no new type checks are emitted by [Redscript Language Server], to finally trigger
 a hot reload. This setting can be configured in `red.config.json` to your convenience.
-If the game engine is already hot reloading, it will not trigger again, and wait until the next changes.
+If the game engine is already hot reloading, it will not trigger again and wait until the next changes.
 
 > [!TIP]
 > This command will record the watch time and increment it in `red.config.json`. It keeps track of the time you spent 
@@ -224,9 +225,13 @@ absolute path instead.
 red-cli pack
 ```
 
-It will prepare an archive with scripts / plugin, ready to release to users. If you have configured Redscript, it will 
-add bundled scripts. If you have configured CET, it will add Lua scripts. If you have configured RED4ext plugin, it will
-add the library file. This is how it should look like with the example you can find in [test/]:
+It will prepare an archive with scripts / files / plugin, ready to release to users:
+- add bundled redscript files (when configured)
+- add RedFileSystem files (when configured)
+- add CET files (when configured)
+- add RED4ext library (when configured)
+
+This is what it should look like with the example you can find in [test/]:
 ```
 Awesome-0.1.0.zip
 |-- bin\
@@ -245,6 +250,9 @@ Awesome-0.1.0.zip
             |-- Awesome.Global.reds
             |-- Awesome.reds
             |-- Awesome.Services.reds
+    |-- storages\
+        |-- Awesome\
+            |-- test.json
 |-- red4ext\
     |-- plugins\
         |-- Awesome\
