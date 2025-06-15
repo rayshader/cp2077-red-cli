@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:archive/archive_io.dart';
-
 import '../data/red_config.dart';
+import '../extensions/archive_ext.dart';
 import '../extensions/chalk_ext.dart';
 import '../logger.dart';
 import 'bundle_task.dart';
@@ -29,11 +28,11 @@ ArchiveInfo pack(RedConfig config, BundleMode mode, bool clean) {
     if (archiveFile.existsSync()) {
       archiveFile.deleteSync();
     }
-    final encoder = ZipFileEncoder();
+    final encoder = ZipFileEncoderSync();
 
     encoder.create(archiveFile.path);
-    encoder.addDirectory(config.stageDir, includeDirName: false);
-    encoder.close();
+    encoder.addDirectorySync(config.stageDir, includeDirName: false);
+    encoder.closeSync();
     if (clean) {
       config.stageDir.deleteSync(recursive: true);
     }

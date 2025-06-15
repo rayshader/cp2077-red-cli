@@ -41,6 +41,8 @@ class RedConfig {
 
   Directory get rhtDir => Directory(p.join(game, 'red4ext', 'plugins', 'RedHotTools'));
 
+  Directory get storageDir => Directory(p.join(game, 'r6', 'storages', name));
+
   /// Default settings file to generate for Redscript Language Server.
   File get defaultRLSFile => File(p.join(p.current, '.redscript-ide'));
 
@@ -101,6 +103,12 @@ class RedConfig {
     }
   }
 
+  Directory getStorageDir(bool bundleOption) {
+    return bundleOption
+        ? Directory(p.join(stage, 'r6', 'storages', name))
+        : Directory(p.join(game, 'r6', 'storages', name));
+  }
+
   File getPluginFile(BundleMode mode) {
     final pluginPath = (mode == BundleMode.debug) ? plugin!.debug : plugin!.release;
 
@@ -148,10 +156,6 @@ class RedConfig {
   }
 
   factory RedConfig.fromJson(Map<String, dynamic> json) {
-    // Deprecated, still present to support versions below 0.3.0
-    if (json['dist'] != null) {
-      json['stage'] = json['dist'];
-    }
     return RedConfig(
       name: json['name'] ?? '',
       version: json['version'] ?? '',
@@ -231,6 +235,10 @@ abstract class RedConfigScriptLanguage {
 
   bool filterFile(String path);
 
+  String toGamePath(RedConfig config, String path);
+
+  String relativeGamePath(RedConfig config, String path);
+
   Map<String, dynamic> toJson() {
     return {
       'src': src,
@@ -244,10 +252,16 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
 
   final Duration debounceTime;
 
+  /// Path of a RedFileSystem storage.
+  final String? storage;
+
+  Directory? get storageDir => storage == null ? null : Directory(storage!);
+
   const RedConfigRedscript({
     super.src = '',
     super.output = RedConfigRedscript.defaultOutput,
     this.debounceTime = RedConfigRedscript.defaultDebounceTime,
+    this.storage,
   });
 
   @override
@@ -264,8 +278,23 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
       src: json['src'] ?? '',
       output: json['output'] ?? RedConfigRedscript.defaultOutput,
       debounceTime: debounceTime,
+      storage: json['storage'],
     );
   }
+
+  @override
+  String toGamePath(RedConfig config, String path) {
+    final redscriptInstallDir = config.getInstallDir(ScriptLanguage.redscript);
+
+    if (path.startsWith(src)) {
+      path = p.relative(path, from: src);
+      path = p.join(redscriptInstallDir.path, path);
+    }
+    return path;
+  }
+
+  @override
+  String relativeGamePath(RedConfig config, String path) => p.relative(path, from: config.game);
 
   @override
   Map<String, dynamic> toJson() {
@@ -276,6 +305,9 @@ class RedConfigRedscript extends RedConfigScriptLanguage {
     }
     if (debounceTime.inMilliseconds != RedConfigRedscript.defaultDebounceTime.inMilliseconds) {
       json['debounceTime'] = debounceTime.inMilliseconds;
+    }
+    if (storage != null && storage!.isNotEmpty) {
+      json['storage'] = storage;
     }
     return json;
   }
@@ -291,6 +323,12 @@ class RedConfigCET extends RedConfigScriptLanguage {
 
   @override
   bool filterFile(String path) => path.endsWith('.lua');
+
+  @override
+  String toGamePath(RedConfig config, String path) => throw UnimplementedError();
+
+  @override
+  String relativeGamePath(RedConfig config, String path) => throw UnimplementedError();
 
   factory RedConfigCET.fromJson(Map<String, dynamic> json) {
     return RedConfigCET(

@@ -7,6 +7,7 @@ import '../data/red_config.dart';
 import '../data/script_file.dart';
 import '../data/script_language.dart';
 import '../data/script_module.dart';
+import '../extensions/chalk_ext.dart';
 import '../extensions/filesystem_ext.dart';
 import '../logger.dart';
 
@@ -29,10 +30,12 @@ class BundleInfo {
 
 class BundleRedscriptInfo {
   final List<ScriptModule> modules;
+  final bool hasStorage;
   final int size;
 
   const BundleRedscriptInfo({
     this.modules = const [],
+    this.hasStorage = false,
     this.size = 0,
   });
 }
@@ -71,12 +74,14 @@ BundleRedscriptInfo _bundleRedscript(RedConfig config, BundleMode mode) {
   final scripts = getScripts(redscriptConfig.srcDir, mode);
   final modules = getModules(scripts);
   final size = bundleModules(modules, config);
+  final hasStorage = bundleStorage(config, true);
 
   if (mode == BundleMode.release && config.license) {
     config.copyLicenseSync(ScriptLanguage.redscript);
   }
   return BundleRedscriptInfo(
     modules: modules,
+    hasStorage: hasStorage,
     size: size,
   );
 }
@@ -113,6 +118,29 @@ void bundlePlugin(RedConfig config, BundleMode mode) {
   File dstPluginFile = File(p.join(dstPlugin.path, '${config.name}.dll'));
 
   srcPlugin.copySync(dstPluginFile.path);
+}
+
+bool bundleStorage(RedConfig config, bool bundleOption) {
+  if (!config.hasRedscript()) {
+    return false;
+  }
+  final srcDir = config.scripts.redscript!.storageDir;
+  if (srcDir == null) {
+    return false;
+  }
+  if (!srcDir.existsSync()) {
+    Logger.error('Could not find storage directory in ${srcDir.path.path}.');
+    return false;
+  }
+
+  final dstDir = config.getStorageDir(bundleOption);
+  if (dstDir.existsSync()) {
+    dstDir.deleteSync(recursive: true);
+  }
+  dstDir.createSync(recursive: true);
+
+  srcDir.copySync(dstDir);
+  return true;
 }
 
 // Redscript

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ------------------------
 
+## [0.5.0] - 2025-06-15
+### Removed
+- `dist` option is no longer supported (use `stage` instead).
+
+### Fixed
+- `pack` command could randomly create a corrupted archive. It should not
+  happen anymore.
+
+### Added
+- support for storage directory (using RedFileSystem) to automatically copy
+  files with `install`, `watch` and `pack` commands in `r6/storages/[name]/`.
+
+------------------------
+
 ## [0.4.0] - 2024-09-25
 ### Changed
 - improved formatting of time.
@@ -73,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - optionally copy LICENSE file in `r6\scripts\<Mod>` in `release` mode.
 
 <!-- Table of releases -->
-[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.1...v0.2.2

@@ -12,6 +12,8 @@ import 'bundle_task.dart';
 void install(RedConfig config, BundleMode mode, bool bundleOption, bool cleanOption) {
   if (bundleOption) {
     bundle(config, mode);
+  } else {
+    bundleStorage(config, false);
   }
   _installRedscript(config, mode, bundleOption, cleanOption);
   _installCET(config, mode, bundleOption, cleanOption);
