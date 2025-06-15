@@ -109,6 +109,7 @@ Future<void> watch(RedConfig config, BundleMode mode) async {
           Logger.clearLine();
           Logger.info('Hot reload: ${'trigger'.bold.cyan}');
         });
+    storage$ = _watchStorage(config, config.scripts.redscript!).debounceTime(Duration(milliseconds: 300));
   }
   if (config.hasCET()) {
     //cet$ = _watchCET(config);
@@ -117,7 +118,7 @@ Future<void> watch(RedConfig config, BundleMode mode) async {
   Logger.saveCursor();
   Logger.info('Redscript: ${'wait'.bold}');
   Logger.info('Hot reload: ${'wait'.bold}');
-  final fs$ = Rx.merge([redscript$, cet$]);
+  final fs$ = Rx.merge([redscript$, storage$, cet$]);
 
   await fs$.drain();
   if (rlsTrigger != null && rlsTrigger.existsSync()) {
@@ -138,6 +139,30 @@ Stream<FileSystemAction> _watchLanguage(RedConfig config, RedConfigScriptLanguag
 }
 
 Stream<FileSystemAction> _watchRedscript(RedConfig config) => _watchLanguage(config, config.scripts.redscript!);
+
+Stream<FileSystemAction> _watchStorage(RedConfig config, RedConfigRedscript red) {
+  if (red.storageDir == null || !red.storageDir!.existsSync()) {
+    return Stream.empty();
+  }
+  return _watchActions(
+    config,
+    red.storageDir!.watch(recursive: true).where((event) => _filterDirectory(event) || !event.path.endsWith('~')),
+    toGamePath: (config, path) {
+      final src = config.scripts.redscript!.storage!;
+      final storageDir = config.getStorageDir(false);
+
+      if (path.startsWith(src)) {
+        path = p.relative(path, from: src);
+        path = p.join(storageDir.path, path);
+      }
+      return path;
+    },
+    relativeGamePath: (config, path) {
+      path = p.relative(path, from: config.game);
+      return path;
+    },
+  );
+}
 
 Stream<FileSystemAction> _watchCET(RedConfig config) => _watchLanguage(config, config.scripts.cet!);
 

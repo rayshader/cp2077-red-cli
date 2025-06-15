@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pack` command could randomly create a corrupted archive. It should not 
   happen anymore.
 
+### Added
+- support for storage directory (using RedFileSystem) to automatically copy 
+  files with `install`, `watch` and `pack` commands in `r6/storages/[name]/`.
+
 ------------------------
 
 ## [0.4.0] - 2024-09-25
