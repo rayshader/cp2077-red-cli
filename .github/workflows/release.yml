@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ replace(github.ref_name, 'v', '') }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        include:
+          - os: ubuntu-latest
+            artifact_name: red-cli-linux
+            binary_name: red-cli
+          - os: macos-latest
+            artifact_name: red-cli-macos
+            binary_name: red-cli
+          - os: windows-latest
+            artifact_name: red-cli-windows
+            binary_name: red-cli.exe
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Setup project
+        run: dart pub get
+
+      - name: Build binary
+        run: dart compile exe bin/red-cli.dart -o ${{ matrix.binary_name }}
+
+      - name: Create archive
+        run: zip ${{ matrix.artifact_name }}-${{ env.VERSION }}.zip ${{ matrix.binary_name }} LICENSE README.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ env.VERSION }}
+          path: ${{ matrix.artifact_name }}-${{ env.VERSION }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ replace(github.ref_name, 'v', '') }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: red-cli-linux-${{ env.VERSION }}
+          path: .
+      - uses: actions/download-artifact@v5
+        with:
+          name: red-cli-macos-${{ env.VERSION }}
+          path: .
+      - uses: actions/download-artifact@v5
+        with:
+          name: red-cli-windows-${{ env.VERSION }}
+          path: .
+
+      - name: Extract CHANGELOG
+        id: changelog
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: query
+          version: latest
+
+      - uses: softprops/action-gh-release@v1
+        name: Create release
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          body: ${{ steps.changelog.outputs.release-notes }}
+          files: |
+            red-cli-linux-${{ env.VERSION }}.zip
+            red-cli-macos-${{ env.VERSION }}.zip
+            red-cli-windows-${{ env.VERSION }}.zip
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

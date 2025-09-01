@@ -1,0 +1,61 @@
+name: 'red-cli pack'
+description: 'Download and run "red-cli pack" to create an archive of your mod, ready to release.'
+branding:
+  icon: 'package'
+  color: 'red'
+inputs:
+  version:
+    description: 'Version of red-cli to download (e.g. "1.0.0"). Defaults to "latest".'
+    required: false
+    default: 'latest'
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine OS
+      id: os
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          echo "asset=red-cli-linux" >> $GITHUB_OUTPUT
+          echo "binary=red-cli" >> $GITHUB_OUTPUT
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          echo "asset=red-cli-macos" >> $GITHUB_OUTPUT
+          echo "binary=red-cli" >> $GITHUB_OUTPUT
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          echo "asset=red-cli-windows" >> $GITHUB_OUTPUT
+          echo "binary=red-cli.exe" >> $GITHUB_OUTPUT
+        else
+          echo "Unsupported OS: $RUNNER_OS"
+          exit 1
+        fi
+
+    - name: Download red-cli
+      id: download
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        ASSET="${{ steps.os.outputs.asset }}"
+        BINARY="${{ steps.os.outputs.binary }}"
+
+        if [ "$VERSION" == "latest" ]; then
+          URL=$(curl -s https://api.github.com/repos/rayshader/cp2077-red-cli/releases/latest | jq -r ".assets[] | select(.name | test(\"$ASSET-\")) | .browser_download_url")
+        else
+          URL=$(curl -s https://api.github.com/repos/rayshader/cp2077-red-cli/releases/tags/v$VERSION | jq -r ".assets[] | select(.name | test(\"$ASSET-$VERSION\")) | .browser_download_url")
+        fi
+
+        if [ -z "$URL" ]; then
+          echo "Error: Could not find download URL for $ASSET-$VERSION"
+          exit 1
+        fi
+
+        echo "Downloading red-cli from $URL"
+        curl -sL "$URL" -o "$ASSET.zip"
+        unzip "$ASSET.zip"
+        chmod +x "$BINARY"
+        echo "binary=$BINARY" >> $GITHUB_OUTPUT
+
+    - name: Run red-cli
+      shell: bash
+      run: |
+        BINARY="${{ steps.download.outputs.binary }}"
+        ./$BINARY pack
