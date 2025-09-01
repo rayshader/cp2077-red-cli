@@ -38,7 +38,13 @@ jobs:
         run: dart compile exe bin/main.dart -o ${{ matrix.binary_name }}
 
       - name: Create archive
-        run: zip ${{ matrix.artifact_name }}-${{ env.VERSION }}.zip ${{ matrix.binary_name }} LICENSE README.md
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            7z a "${{ matrix.artifact_name }}-${{ env.VERSION }}.zip" "${{ matrix.binary_name }}" LICENSE README.md
+          else
+            zip "${{ matrix.artifact_name }}-${{ env.VERSION }}.zip" "${{ matrix.binary_name }}" LICENSE README.md
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
