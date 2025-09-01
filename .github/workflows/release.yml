@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: ${{ replace(github.ref_name, 'v', '') }}
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
@@ -26,6 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: dart-lang/setup-dart@v1
+
+      - name: Convert version tag from "vX.Y.Z" to "X.Y.Z"
+        run: |
+          VERSION="${{ replace(github.ref_name, 'v', '') }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Setup project
         run: dart pub get
@@ -44,9 +47,13 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ replace(github.ref_name, 'v', '') }}
+
     steps:
+      - name: Convert version tag from "vX.Y.Z" to "X.Y.Z"
+        run: |
+          VERSION="${{ replace(github.ref_name, 'v', '') }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - uses: actions/download-artifact@v5
         with:
           name: red-cli-linux-${{ env.VERSION }}
