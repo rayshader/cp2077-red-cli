@@ -35,7 +35,7 @@ jobs:
         run: dart pub get
 
       - name: Build binary
-        run: dart compile exe bin/red-cli.dart -o ${{ matrix.binary_name }}
+        run: dart compile exe bin/main.dart -o ${{ matrix.binary_name }}
 
       - name: Create archive
         run: zip ${{ matrix.artifact_name }}-${{ env.VERSION }}.zip ${{ matrix.binary_name }} LICENSE README.md
