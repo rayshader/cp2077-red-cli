@@ -1,5 +1,5 @@
 # Red CLI
-![Cyberpunk 2077](https://img.shields.io/badge/Cyberpunk%202077-v2.13-blue)
+![Cyberpunk 2077](https://img.shields.io/badge/Cyberpunk%202077-v2.3-blue)
 ![GitHub License](https://img.shields.io/github/license/rayshader/cp2077-red-cli)
 [![Donate](https://img.shields.io/badge/donate-buy%20me%20a%20coffee-yellow)](https://www.buymeacoffee.com/lpfreelance)
 
