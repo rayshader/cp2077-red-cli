@@ -26,8 +26,9 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       - name: Convert version tag from "vX.Y.Z" to "X.Y.Z"
+        shell: bash
         run: |
-          VERSION="${{ replace(github.ref_name, 'v', '') }}"
+          VERSION="${GITHUB_REF_NAME#v}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Setup project
@@ -50,8 +51,9 @@ jobs:
 
     steps:
       - name: Convert version tag from "vX.Y.Z" to "X.Y.Z"
+        shell: bash
         run: |
-          VERSION="${{ replace(github.ref_name, 'v', '') }}"
+          VERSION="${GITHUB_REF_NAME#v}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - uses: actions/download-artifact@v5
