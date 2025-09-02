@@ -56,6 +56,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Convert version tag from "vX.Y.Z" to "X.Y.Z"
         shell: bash
         run: |
