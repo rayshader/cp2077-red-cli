@@ -77,7 +77,7 @@ jobs:
 
       - name: Extract CHANGELOG
         id: changelog
-        uses: release-flow/keep-a-changelog-action@v2
+        uses: release-flow/keep-a-changelog-action@v3
         with:
           command: query
           version: latest
