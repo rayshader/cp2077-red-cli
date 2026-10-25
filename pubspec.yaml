@@ -7,13 +7,13 @@ environment:
   sdk: ^3.8.1
 
 dependencies:
-  archive: ^4.0.7
+  archive: ^4.5.2
   args: ^2.7.0
   async: ^2.13.0
   chalkdart: ^3.0.5
   path: ^1.9.1
   rxdart: ^0.28.0
-  toml: ^0.16.0
+  toml: ^0.18.0
 
 dev_dependencies:
   lints: ^6.0.0

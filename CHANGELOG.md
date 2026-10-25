@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `pack` command to generate a valid ZIP archive. It will now always use
+  a unix-style path separator.
+
 ------------------------
 
 ## [0.5.0] - 2025-06-15
