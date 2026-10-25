@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+------------------------
+
+## [0.5.1] - 2026-10-25
 ### Fixed
 - `pack` command to generate a valid ZIP archive. It will now always use
   a unix-style path separator.
@@ -91,7 +94,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - optionally copy LICENSE file in `r6\scripts\<Mod>` in `release` mode.
 
 <!-- Table of releases -->
-[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/rayshader/cp2077-red-cli/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/rayshader/cp2077-red-cli/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rayshader/cp2077-red-cli/compare/v0.2.2...v0.3.0

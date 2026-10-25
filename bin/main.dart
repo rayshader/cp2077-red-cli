@@ -11,16 +11,17 @@ import 'data/red_config.dart';
 
 class RedRunner extends CommandRunner {
   @override
-  final String? usageFooter = '\nGitHub: https://github.com/rayshader/cp2077-red-cli'
+  final String? usageFooter =
+      '\nGitHub: https://github.com/rayshader/cp2077-red-cli'
       '\nDiscord: https://discord.com/channels/717692382849663036/1254464502968356965';
 
   RedRunner()
-      : super(
-          'red-cli',
-          '${'red-cli v0.5.0'.bold}\n'
-              '\n'
-              'A tool to bundle scripts of a mod for Cyberpunk 2077.',
-        );
+    : super(
+        'red-cli',
+        '${'red-cli v0.5.1'.bold}\n'
+            '\n'
+            'A tool to bundle scripts of a mod for Cyberpunk 2077.',
+      );
 }
 
 void main(List<String> args) async {
